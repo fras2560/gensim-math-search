@@ -101,3 +101,7 @@ ENV/
 .mypy_cache/
 /tangent/
 /data/
+/testIndex/
+/testModel/
+/.project
+/.pydevproject
