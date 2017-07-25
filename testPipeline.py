@@ -29,7 +29,7 @@ class TestQuery(unittest.TestCase):
     def testConstructor(self):
         q = Query(self.topic)
         self.assertEqual("NTCIR12-MathWiki-1", str(q))
-        expect = " what   symbol   is ('v!ζ','!0','n')"
+        expect = " symbol  ('v!ζ','!0','n')"
         self.assertEqual(expect, q.get_words())
 
 
@@ -119,28 +119,101 @@ class TestIndexer(unittest.TestCase):
         else:
             shutil.rmtree(self.index)
             os.makedirs(self.index)
-        create_model(self.corpus, self.models, lda=True, lsi=True)
-        path = os.path.join(os.getcwd(), "model.lda")
+        create_model(self.corpus, self.models, lda=True, lsi=True, tfidf=True)
+        # load up the models
+        path = os.path.join(self.models, "model.lda")
         self.lda = models.LdaModel.load(path)
-        path = os.path.join(os.getcwd(), "model.lsi")
+        path = os.path.join(self.models, "model.lsi")
         self.lsi = models.LsiModel.load(path)
+        path = os.path.join(self.models, "model.tfidf")
+        self.tfidf = models.LdaModel.load(path)
+        # create the indexes
         create_index(self.corpus, self.index, self.lda, "lda")
         create_index(self.corpus, self.index, self.lsi, "lsi")
-        path = os.path.join(self.index, "model.lsi")
+        create_index(self.corpus, self.index, self.tfidf, "tfidf")
+        # load the indexes
+        path = os.path.join(self.index, "lsi.index")
         self.lsi_index = similarities.Similarity.load(path)
-        path = os.path.join(self.index, "model.lda")
+        path = os.path.join(self.index, "lda.index")
         self.lda_index = similarities.Similarity.load(path)
+        path = os.path.join(self.index, "tfidf.index")
+        self.tfidf_index = similarities.Similarity.load(path)
 
     def log(self, message):
         if self.debug:
             print(message)
 
     def tearDown(self):
-        if os.path.exists(self.output):
-            shutil.rmtree(self.output)
+        if os.path.exists(self.models):
+            shutil.rmtree(self.models)
+        if os.path.exists(self.index):
+            shutil.rmtree(self.index)
 
-    def testSearch(self):
-        pass
+    def testSearchLSI(self):
+        indexer = Indexer(MathCorpus(self.corpus).dictionary,
+                          self.lsi,
+                          self.lsi_index,
+                          self.corpus)
+        doc = """
+                <num>test-query</num>
+                <keyword>Human computer interaction<keyword>
+              """
+        query = Query(BeautifulSoup(doc))
+        results = indexer.search(query)
+        expect = [os.path.join(self.corpus, '1.html'),
+                  os.path.join(self.corpus, '4.html'),
+                  os.path.join(self.corpus, '2.html'),
+                  os.path.join(self.corpus, '6.html'),
+                  os.path.join(self.corpus, '7.html'),
+                  os.path.join(self.corpus, '8.html'),
+                  os.path.join(self.corpus, '9.html'),
+                  os.path.join(self.corpus, '3.html'),
+                  os.path.join(self.corpus, '5.html')
+                  ]
+        self.assertEqual(expect, results)
+        doc = """
+                <num>test-query</num>
+                <keyword>Tree orderings<keyword>
+              """
+        query = Query(BeautifulSoup(doc))
+        results = indexer.search(query)
+        expect = [os.path.join(self.corpus, '6.html'),
+                  os.path.join(self.corpus, '7.html'),
+                  os.path.join(self.corpus, '8.html'),
+                  os.path.join(self.corpus, '4.html'),
+                  os.path.join(self.corpus, '1.html'),
+                  os.path.join(self.corpus, '5.html'),
+                  os.path.join(self.corpus, '2.html'),
+                  os.path.join(self.corpus, '3.html'),
+                  os.path.join(self.corpus, '9.html')
+                  ]
+        self.assertEqual(expect, results)
+
+    def testSearchTFIDF(self):
+        indexer = Indexer(MathCorpus(self.corpus).dictionary,
+                          self.tfidf,
+                          self.tfidf_index,
+                          self.corpus)
+        doc = """
+                <num>test-query</num>
+                <keyword>Human computer interaction<keyword>
+              """
+        query = Query(BeautifulSoup(doc))
+        results = indexer.search(query)
+        expect = [os.path.join(self.corpus, '1.html'),
+                  os.path.join(self.corpus, '4.html'),
+                  os.path.join(self.corpus, '2.html')]
+        self.assertEqual(results, expect)
+        doc = """
+                <num>test-query</num>
+                <keyword>tree ordering<keyword>
+              """
+        query = Query(BeautifulSoup(doc))
+        results = indexer.search(query)
+        expect = [os.path.join(self.corpus, '6.html'),
+                  os.path.join(self.corpus, '7.html'),
+                  os.path.join(self.corpus, '8.html')]
+        self.assertEqual(results, expect)
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']

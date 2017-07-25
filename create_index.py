@@ -96,7 +96,7 @@ if __name__ == "__main__":
                         help="The path to the model",
                         action="store")
     parser.add_argument("type",
-                        help="The type of the model (1:tfidf, 2:lda, 3:lsi)",
+                        help="The type of the model (1:tfidf, 2:lsi)",
                         type=int)
     parser.add_argument("name",
                         help="The name of the index")
@@ -105,8 +105,6 @@ if __name__ == "__main__":
     if args.type == 1:
         model = models.TfidfModel.load(args.model)
     elif args.type == 2:
-        model = models.LdaModel.load(args.model)
-    elif args.type == 3:
         model = models.LsiModel.load(args.model)
     else:
         print("Unknown Model type")

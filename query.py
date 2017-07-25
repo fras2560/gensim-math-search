@@ -3,15 +3,34 @@ Created on Jul 20, 2017
 
 @author: d6fraser
 '''
-import os
+from nltk.stem.porter import PorterStemmer
+from nltk.corpus import stopwords
 from bs4 import BeautifulSoup
-import unittest
-from math_corpus import convert_math_expression
+from math_corpus import convert_math_expression, format_paragraph
 import sys
-from _ast import Attribute
+import os
+import unittest
 
 PR_SCORE = 0
 R_SCORE = 2.0
+
+
+class Queries():
+    """A class that shows what needs to be implemented
+    to be used to check results for a specific benchmark
+    """
+    def __init__(self, queries, results):
+        pass
+
+    def test_indexer(self, indexer, output, top_k=10):
+        """Outputs the score for each query
+
+        Parameters:
+            indexer: the indexer to use (Indexer)
+            output: the path to the file to output to (path)
+            top_k: the number of documents to retrieve
+        """
+        pass
 
 
 class Indexer():
@@ -25,8 +44,8 @@ class Indexer():
         """Returns the top k documents for the search
 
         Parameters:
-            query: the query object to search
-            top_k
+            query: the query object to search (Query)
+            top_k: how many results to return, default 10 (int)
         """
         # set the number of documents returned
         self.index.num_best = top_k
@@ -34,11 +53,19 @@ class Indexer():
         vec_bow = self.dictionary.doc2bow(query.get_words().split(" "))
         vec_model = self.model[vec_bow]
         # now search for it
-        sims = sorted(enumerate(self.index[vec_model],
-                                key=lambda item: -item[1]))
+        sims = self.index[vec_model]
+        if (len(sims) > 0):
+            if isinstance(sims[0], list) or isinstance(sims[0], tuple):
+                sims = sorted(self.index[vec_model],
+                              key=lambda item: -item[1])
+            else:
+                sims = sorted(enumerate(self.index[vec_model]),
+                              key=lambda item: -item[1])
+        print("Sims", sims)
         # build up the list of document names
         documents = []
-        for doc in range(0, top_k):
+        for doc in range(0, min(top_k, len(sims))):
+            print(sims[doc])
             documents.append(self.collection.lookup(sims[doc][0]))
         return documents
 
@@ -66,7 +93,7 @@ class DocumentCollection():
         return document
 
 
-class ArxivQueries():
+class ArxivQueries(Queries):
     def __init__(self, queries, results):
         with open(queries) as doc:
             self.soup = BeautifulSoup(doc)
@@ -145,9 +172,11 @@ class ExpectedResults():
 
 class Query():
     def __init__(self, topic):
+        stemmer = PorterStemmer()
         keywords = []
         for keyword in topic.find_all("keyword"):
-            keywords.append(keyword.text)
+            keywords.append(" ".join(format_paragraph(keyword.text,
+                                                      stemmer)))
         formulas = []
         for formula in topic.find_all("formula"):
             formulas.append(convert_math_expression(str(formula)))

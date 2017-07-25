@@ -80,7 +80,8 @@ def format_paragraph(paragraph, stemmer):
     """
     result = strip_tags(paragraph)
     words = result.split(" ")
-    return [stemmer.stem(word.lower()) for word in words if keep_word(word)]
+    return [stemmer.stem(word.lower().strip()) for word in words
+            if keep_word(word.strip())]
 
 
 class MathCorpus(object):
@@ -165,6 +166,7 @@ class ParseDocument(object):
 class TestMathCorpus(unittest.TestCase):
     def setUp(self):
         self.fp = os.path.join(os.getcwd(), "test")
+        self.corpus = os.path.join(os.getcwd(), "tutorialDocuments")
 
     def tearDown(self):
         pass
@@ -175,6 +177,13 @@ class TestMathCorpus(unittest.TestCase):
                     [(0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1)]]
         for index, vector in enumerate(mc):
             self.assertEqual(expected[index], vector)
+
+    def testTutorial(self):
+        mc = MathCorpus(self.corpus)
+        expect = ['human', 'time', 'minor', 'comput', 'survey', 'user',
+                  'system', 'interfac', 'respons', 'graph', 'tree', 'ep']
+        for key  in expect:
+            self.assertEqual(key in mc.dictionary.token2id.keys(), True)
 
 
 class TestMathDocument(unittest.TestCase):
@@ -280,11 +289,6 @@ class TestFunctions(unittest.TestCase):
                   'repres', 'real', 'number', 'dedekind', 'cut']
         self.assertEqual(result, expect)
 
-    def testConvertExpression(self):
-        test = """<math xmlns="http://www.w3.org/1998/Math/MathML" xmlns:html="http://www.w3.org/1999/xhtml" alttext="~{}~{}~{}{\vrule width 3.44pt depth -0.43pt height 3.87pt}" class="ltx_Math" display="inline" id="S3.SS0.SSS0.P3.p6.1.m7.1" xref="S3.SS0.SSS0.P3.p6.1.m7.1.cmml"><semantics id="S3.SS0.SSS0.P3.p6.1.m7.1a" xref="S3.SS0.SSS0.P3.p6.1.m7.1.cmml"><mpadded id="S3.SS0.SSS0.P3.p6.1.m7.1.4" lspace="9.99pt" width="+9.99pt" xref="S3.SS0.SSS0.P3.p6.1.m7.1.4.cmml"><mtext id="S3.SS0.SSS0.P3.p6.1.m7.1.4a" mathcolor="red" xref="S3.SS0.SSS0.P3.p6.1.m7.1.4.cmml"><html:span class="ltx_rule" style="width:3.44pt;height:3.87pt;vertical-align:-0.43pt;background:black;display:inline-block;"> </html:span></mtext></mpadded></semantics></math>
-               """
-        result = convert_math_expression(test)
-        self.assertEqual(result, None)
 
 if __name__ == "__main__":
     pass

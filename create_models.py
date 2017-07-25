@@ -22,6 +22,7 @@ def create_model(corpus_path, output_path, tfidf=False, lda=False, lsi=False):
         lsi=False: True if want a lsi model created (boolean)
     """
     mc = MathCorpus(corpus_path)
+    mc.save_dictionary(os.path.join(output_path, "corpus.dict"))
     tfidf_model = models.TfidfModel(mc)
     if tfidf:
         tfidf_model.save(os.path.join(output_path, "model.tfidf"))
@@ -86,7 +87,7 @@ class TestCreateModels(unittest.TestCase):
         doc_bow = [(0, 1), (1, 1)]
         answer = lsi_model[doc_bow]
         self.log(answer)
-        self.assertAlmostEqual(len(answer), 6, delta=2)
+        self.assertAlmostEqual(len(answer), 7, delta=4)
 
 if __name__ == "__main__":
     descp = """
