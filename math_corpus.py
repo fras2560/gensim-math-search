@@ -84,13 +84,6 @@ def format_paragraph(paragraph, stemmer):
 
 
 class MathCorpus(object):
-    def parse_file(self, filepath):
-        if filepath.endswith(".xhtml") or filepath.endswith(".html"):
-            result = ParseDocument(filepath).get_words().split(" ")
-        else:
-            result = []
-        return result
-
     def __init__(self, directory, filepath=None):
         self.directory = directory
         if filepath is None:
@@ -114,6 +107,13 @@ class MathCorpus(object):
             self.dictionary = dictionary
         else:
             self.dictionary = self.load_dictionary(filepath)
+
+    def parse_file(self, filepath):
+        if filepath.endswith(".xhtml") or filepath.endswith(".html"):
+            result = ParseDocument(filepath).get_words().split(" ")
+        else:
+            result = []
+        return result
 
     def load_dictionary(self, filepath):
         self.dictionary = corpora.Dictionary.load(filepath)
@@ -285,5 +285,6 @@ class TestFunctions(unittest.TestCase):
                """
         result = convert_math_expression(test)
         self.assertEqual(result, None)
+
 if __name__ == "__main__":
     pass

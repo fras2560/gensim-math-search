@@ -1,8 +1,12 @@
 import unittest
 import re
 from bs4 import BeautifulSoup
+
+
 def strip_tags(html):
-    words = re.sub(r'<.*?>', ' ', html) 
+    """Returns a string stripped of all html tags
+    """
+    words = re.sub(r'<.*?>', ' ', html)
     words = words.replace("  ", " ")
     return BeautifulSoup(words).text
 
@@ -10,8 +14,10 @@ def strip_tags(html):
 class TestStriper(unittest.TestCase):
     def setUp(self):
         pass
+
     def tearDown(self):
         pass
+
     def testStripTags(self):
         result = strip_tags("<html>Hello<html>")
         self.assertEqual(result.strip(), "Hello")
