@@ -54,6 +54,7 @@ class Indexer():
         vec_model = self.model[vec_bow]
         # now search for it
         sims = self.index[vec_model]
+        print(sims)
         if (len(sims) > 0):
             if isinstance(sims[0], list) or isinstance(sims[0], tuple):
                 sims = sorted(self.index[vec_model],
@@ -61,11 +62,9 @@ class Indexer():
             else:
                 sims = sorted(enumerate(self.index[vec_model]),
                               key=lambda item: -item[1])
-        print("Sims", sims)
         # build up the list of document names
         documents = []
         for doc in range(0, min(top_k, len(sims))):
-            print(sims[doc])
             documents.append(self.collection.lookup(sims[doc][0]))
         return documents
 

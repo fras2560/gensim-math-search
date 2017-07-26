@@ -8,7 +8,7 @@ from create_models import create_model, TestCreateModels
 from query import Indexer, DocumentCollection, ArxivQueries,\
                   ExpectedResults, Query
 from bs4 import BeautifulSoup
-from gensim import models, similarities
+from gensim import models, similarities, corpora
 import unittest
 import os
 import shutil
@@ -119,25 +119,44 @@ class TestIndexer(unittest.TestCase):
         else:
             shutil.rmtree(self.index)
             os.makedirs(self.index)
-        create_model(self.corpus, self.models, lda=True, lsi=True, tfidf=True)
+        create_model(self.corpus,
+                     self.models,
+                     num_topics=2,
+                     lda=True,
+                     lsi=True,
+                     tfidf=True,
+                     hdp=True)
         # load up the models
+        self.dictionary = corpora.Dictionary.load(os.path.join(self.models,
+                                                               "corpus.dict"))
+        self.corp = corpora.MmCorpus(os.path.join(self.models,
+                                                  "corpus.mm"))
         path = os.path.join(self.models, "model.lda")
         self.lda = models.LdaModel.load(path)
         path = os.path.join(self.models, "model.lsi")
         self.lsi = models.LsiModel.load(path)
         path = os.path.join(self.models, "model.tfidf")
-        self.tfidf = models.LdaModel.load(path)
+        self.tfidf = models.TfidfModel.load(path)
+        path = os.path.join(self.models, "model.hdp")
+        self.hdp = models.HdpModel.load(path)
         # create the indexes
-        create_index(self.corpus, self.index, self.lda, "lda")
-        create_index(self.corpus, self.index, self.lsi, "lsi")
-        create_index(self.corpus, self.index, self.tfidf, "tfidf")
+        create_index(self.corpus,
+                     self.index,
+                     self.models,
+                     "test",
+                     lda=True,
+                     lsi=True,
+                     tfidf=True,
+                     hdp=True)
         # load the indexes
-        path = os.path.join(self.index, "lsi.index")
+        path = os.path.join(self.index, "test-lsi.index")
         self.lsi_index = similarities.Similarity.load(path)
-        path = os.path.join(self.index, "lda.index")
+        path = os.path.join(self.index, "test-lda.index")
         self.lda_index = similarities.Similarity.load(path)
-        path = os.path.join(self.index, "tfidf.index")
+        path = os.path.join(self.index, "test-tfidf.index")
         self.tfidf_index = similarities.Similarity.load(path)
+        path = os.path.join(self.index, "test-hdp.index")
+        self.hdp_index = similarities.Similarity.load(path)
 
     def log(self, message):
         if self.debug:
@@ -150,7 +169,7 @@ class TestIndexer(unittest.TestCase):
             shutil.rmtree(self.index)
 
     def testSearchLSI(self):
-        indexer = Indexer(MathCorpus(self.corpus).dictionary,
+        indexer = Indexer(self.dictionary,
                           self.lsi,
                           self.lsi_index,
                           self.corpus)
@@ -170,6 +189,14 @@ class TestIndexer(unittest.TestCase):
                   os.path.join(self.corpus, '3.html'),
                   os.path.join(self.corpus, '5.html')
                   ]
+        self.debug = True
+        self.log(expect)
+        self.log(results)
+        print("Topics")
+        self.lsi.print_debug(2)
+        print(self.lsi)
+        for i in self.lsi.print_topics():
+            print(i)
         self.assertEqual(expect, results)
         doc = """
                 <num>test-query</num>
@@ -203,6 +230,7 @@ class TestIndexer(unittest.TestCase):
         expect = [os.path.join(self.corpus, '1.html'),
                   os.path.join(self.corpus, '4.html'),
                   os.path.join(self.corpus, '2.html')]
+        self.log(results)
         self.assertEqual(results, expect)
         doc = """
                 <num>test-query</num>

@@ -93,6 +93,7 @@ class MathCorpus(object):
             for p, __, files in os.walk(self.directory):
                 for file in files:
                     fps.append(os.path.join(p, file))
+            self.length = len(fps)
             dictionary = corpora.Dictionary(self.parse_file(file)
                                             for file in fps)
             stop_ids = [dictionary.token2id[stopword]
@@ -107,7 +108,9 @@ class MathCorpus(object):
             dictionary.compactify()
             self.dictionary = dictionary
         else:
-            self.dictionary = self.load_dictionary(filepath)
+            self.load_dictionary(filepath)
+        print("Dictionary", self.dictionary)
+        print(self.dictionary.token2id)
 
     def parse_file(self, filepath):
         if filepath.endswith(".xhtml") or filepath.endswith(".html"):
@@ -132,6 +135,9 @@ class MathCorpus(object):
                 else:
                     # just skip for now
                     pass
+
+    def __len__(self):
+        return self.length
 
 
 class ParseDocument(object):
