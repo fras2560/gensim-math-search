@@ -25,15 +25,20 @@ def create_index(corpus_path,
                  lda=False,
                  lsi=False,
                  tfidf=False,
-                 hdp=False,
-                 dictionary=None):
+                 hdp=False):
     """Creates an index specified by the parameters & saves to output directory
 
     Parameters:
         corpus_path: the path to the corpus directory (os.path)
         output_path: the directory path where index(s) will be saved (os.path)
         model_path: the directory path with the models to be used (os.path)
+                    The model path should have a corpus.dict and corpus.mm too
+                    Use create_models.py
         name: the name of the index (str)
+        lda: if True will create an index based on the lda model (boolean)
+        lsi: if True will create an index based on the lsi model (boolean)
+        tfidf: if True will create an index based on the tfidf model (boolean)
+        hdp: if True will create an index based on hdp model (boolean)
     """
     dictionary = corpora.Dictionary.load(os.path.join(model_path,
                                                       "corpus.dict"))
@@ -96,6 +101,8 @@ class Test(unittest.TestCase):
     def tearDown(self):
         if os.path.exists(self.output):
             shutil.rmtree(self.output)
+        if os.path.exists(os.path.join(os.getcwd(), "testIndex.0")):
+            os.remove(os.path.join(os.getcwd(), "testIndex.0"))
 
     def testLDA(self):
         create_index(self.corpus, self.output, self.output, "test", lda=True)
