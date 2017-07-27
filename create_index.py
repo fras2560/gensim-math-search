@@ -3,7 +3,6 @@ Created on Jul 24, 2017
 
 @author: d6fraser
 '''
-from math_corpus import MathCorpus
 from gensim import similarities, models, corpora
 from create_models import create_model
 from math_corpus import format_paragraph
@@ -13,7 +12,6 @@ import os
 import shutil
 import argparse
 import logging
-import time
 logging.basicConfig(format='%(levelname)s : %(message)s', level=logging.INFO)
 logging.root.level = logging.INFO
 

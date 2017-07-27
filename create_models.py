@@ -126,7 +126,6 @@ class TestCreateModels(unittest.TestCase):
         vec_bow = self.dictionary.doc2bow(format_paragraph(doc,
                                                            PorterStemmer()))
         self.log(lsi_model)
-        corpus = corpora.MmCorpus(os.path.join(self.output, "corpus.mm"))
         vec_lsi = lsi_model[vec_bow]
         self.assertEqual(len(vec_lsi), 2)
         e1_1 = [(0.703, "tree"),

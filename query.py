@@ -14,6 +14,7 @@ import unittest
 PR_SCORE = 0
 R_SCORE = 2.0
 
+
 def reverse_lookup(dictionary, value):
     for key, v in dictionary.items():
         if value == v:
