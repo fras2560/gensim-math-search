@@ -1,7 +1,9 @@
 '''
-Created on Jul 20, 2017
-
-@author: d6fraser
+Name: Dallas Fraser
+Email: d6fraser@uwaterloo.ca
+Date: 2017-07-27
+Project: Tangent GT
+Purpose: To allow a user to query and run the NTCIR-MathIR task
 '''
 from nltk.stem.porter import PorterStemmer
 from nltk.corpus import stopwords
@@ -102,6 +104,12 @@ class DocumentCollection():
 
 class ArxivQueries(Queries):
     def __init__(self, queries, results):
+        """ArxivQueries: the queries for arxiv task NTCIR MathIR 12
+
+        Parameters:
+            queries: the queries file (os.path)
+            results: the results file (os.path)
+        """
         with open(queries) as doc:
             self.soup = BeautifulSoup(doc)
             self.quries = []
@@ -136,6 +144,12 @@ class ArxivQueries(Queries):
 
 class ExpectedResults():
     def __init__(self, document):
+        """ExpectedResults: used to find the scores
+                            for a document for a given query
+
+        Parameters:
+            document: the document with the queries and results
+        """
         self.results = {}
         for line in document:
             parts = line.split(" ")
@@ -179,6 +193,11 @@ class ExpectedResults():
 
 class Query():
     def __init__(self, topic):
+        """Query: the NTCIR-MathIR query
+
+        Parameters:
+            topic: the soup topic object (bs4)
+        """
         stemmer = PorterStemmer()
         keywords = []
         for keyword in topic.find_all("keyword"):

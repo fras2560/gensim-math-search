@@ -1,3 +1,10 @@
+'''
+Name: Dallas Fraser
+Email: d6fraser@uwaterloo.ca
+Date: 2017-07-27
+Project: Tangent GT
+Purpose: Used to strip html for parsing documents
+'''
 import unittest
 import re
 from bs4 import BeautifulSoup

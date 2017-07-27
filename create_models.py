@@ -1,7 +1,9 @@
 '''
-Created on Jul 20, 2017
-
-@author: d6fraser
+Name: Dallas Fraser
+Email: d6fraser@uwaterloo.ca
+Date: 2017-07-27
+Project: Tangent GT
+Purpose: To create the models to be used for indexing
 '''
 
 from math_corpus import MathCorpus, format_paragraph
