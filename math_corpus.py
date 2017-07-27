@@ -86,6 +86,12 @@ def format_paragraph(paragraph, stemmer):
 
 class MathCorpus(object):
     def __init__(self, directory, filepath=None):
+        """A gensim corpus for math documents uses tangent to encode MathMl
+
+        Parameters:
+            directory: the corpus directory (os.path)
+            filepath: the filepath to the dictionary (os.path)
+        """
         self.directory = directory
         if filepath is None:
             self.directory = directory
@@ -113,6 +119,13 @@ class MathCorpus(object):
         print(self.dictionary.token2id)
 
     def parse_file(self, filepath):
+        """Returns the parsed contents of the file
+
+        Parameters:
+            filepath: the path to the file to be parsed (os.path)
+        Returns:
+            result: the parsed contents of the file (list)
+        """
         if filepath.endswith(".xhtml") or filepath.endswith(".html"):
             result = ParseDocument(filepath).get_words().split(" ")
         else:
@@ -120,12 +133,23 @@ class MathCorpus(object):
         return result
 
     def load_dictionary(self, filepath):
+        """Load a previous dictionary
+
+        Parameters:
+            filepath: the path to the dictionary (os.path)
+        """
         self.dictionary = corpora.Dictionary.load(filepath)
 
     def save_dictionary(self, filepath):
+        """Save the current dictionary
+
+        Parameters:
+            filepath: the path to where the dictionary will be saved (os.path)
+        """
         self.dictionary.save(filepath)
 
     def __iter__(self):
+        """ Yields one parsed document at a time"""
         for subdir, __, files in os.walk(self.directory):
             for file in files:
                 filepath = os.path.join(subdir, file)
@@ -137,6 +161,7 @@ class MathCorpus(object):
                     pass
 
     def __len__(self):
+        """Returns the number of document in the corpus """
         return self.length
 
 
