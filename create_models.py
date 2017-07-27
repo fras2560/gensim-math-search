@@ -4,15 +4,16 @@ Created on Jul 20, 2017
 @author: d6fraser
 '''
 
-from math_corpus import MathCorpus
+from math_corpus import MathCorpus, format_paragraph
 from gensim import models, corpora
+from nltk.stem.porter import PorterStemmer
 import os
 import unittest
 import shutil
 import argparse
 import logging
 logging.basicConfig(format='%(levelname)s : %(message)s', level=logging.INFO)
-logging.root.level = logging.INFO  # ipython sometimes messes up the logging setup; restore
+logging.root.level = logging.INFO
 
 
 def create_model(corpus_path,
@@ -118,6 +119,16 @@ class TestCreateModels(unittest.TestCase):
         answer = lsi_model[doc_bow]
         self.log(answer)
         self.assertAlmostEqual(len(answer), 2, delta=1)
+        # make sure can vev bow the document
+        doc = "Human computer interaction"
+        self.dictionary = corpora.Dictionary.load(os.path.join(self.output,
+                                                               "corpus.dict"))
+        vec_bow = self.dictionary.doc2bow(format_paragraph(doc,
+                                                           PorterStemmer()))
+        self.log(lsi_model)
+        corpus = corpora.MmCorpus(os.path.join(self.output, "corpus.mm"))
+        vec_lsi = lsi_model[vec_bow]
+        self.assertEqual(len(vec_lsi), 2)
         e1_1 = [(0.703, "tree"),
                 (0.538, "graph"),
                 (0.402, "minor"),

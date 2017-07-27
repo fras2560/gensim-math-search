@@ -188,7 +188,7 @@ class TestMathCorpus(unittest.TestCase):
         mc = MathCorpus(self.corpus)
         expect = ['human', 'time', 'minor', 'comput', 'survey', 'user',
                   'system', 'interfac', 'respons', 'graph', 'tree', 'ep']
-        for key  in expect:
+        for key in expect:
             self.assertEqual(key in mc.dictionary.token2id.keys(), True)
 
 

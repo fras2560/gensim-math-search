@@ -13,8 +13,9 @@ import os
 import shutil
 import argparse
 import logging
+import time
 logging.basicConfig(format='%(levelname)s : %(message)s', level=logging.INFO)
-logging.root.level = logging.INFO  # ipython sometimes messes up the logging setup; restore
+logging.root.level = logging.INFO
 
 
 def create_index(corpus_path,
@@ -105,6 +106,8 @@ class Test(unittest.TestCase):
         self.assertEqual(expect, str(index))
 
     def testLSI(self):
+        lsi_model = models.LsiModel.load(os.path.join(self.output,
+                                                      "model.lsi"))
         create_index(self.corpus, self.output, self.output, "test", lsi=True)
         index = similarities.Similarity.load(os.path.join(self.output,
                                                           "test-lsi.index"))
@@ -113,16 +116,25 @@ class Test(unittest.TestCase):
         self.assertEqual(expect, str(index))
         # search with the index
         doc = "Human computer interaction"
-        lsi = models.LdaModel.load(os.path.join(self.output, "model.lsi"))
-        print(format_paragraph(doc, PorterStemmer()))
         vec_bow = self.dictionary.doc2bow(format_paragraph(doc,
                                                            PorterStemmer()))
-        self.log(lsi)
-        print(lsi, vec_bow)
-        vec_lsi = lsi[vec_bow]
+        self.log(lsi_model)
+        vec_lsi = lsi_model[vec_bow]
         sims = index[vec_lsi]
         sims = sorted(enumerate(sims), key=lambda item: -item[1])
-        print(sims)
+        expected = [(2, 0.99994278),
+                    (0, 0.99994081),
+                    (3, 0.999879),
+                    (4, 0.99935204),
+                    (1, 0.99467087),
+                    (8, 0.1938726),
+                    (7, -0.023664713),
+                    (6, -0.0515742),
+                    (5, -0.088042185)]
+        self.log(sims)
+        for index, t in enumerate(sims):
+            self.assertEqual(expected[index][0], t[0])
+            self.assertAlmostEqual(expected[index][1], t[1])
 
     def testHDP(self):
         create_index(self.corpus, self.output, self.output, "test", hdp=True)

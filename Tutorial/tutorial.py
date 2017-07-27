@@ -1,6 +1,10 @@
+import sys
+sys.path.append("..")
+from math_corpus import MathCorpus
 from gensim import corpora, models, similarities
 from six import iteritems
 import logging
+import os
 logging.basicConfig(format='%(levelname)s : %(message)s', level=logging.INFO)
 logging.root.level = logging.INFO  # ipython sometimes messes up the logging setup; restore
 # tutorial part 1
@@ -33,7 +37,7 @@ print(dictionary.dfs)
 for did, count in dictionary.dfs.items():
 	print(reverse_lookup(dictionary.token2id, did), count)
 
-corpus = MyCorpus()
+corpus = MathCorpus(os.path.join("/home/d6fraser/Documents/Research/GT/Tutorial/tutorialDocuments/"))
 tfidf = models.TfidfModel(corpus)
 corpus_tfidf = tfidf[corpus]
 lsi = models.LsiModel(corpus_tfidf, id2word=dictionary, num_topics=2)
