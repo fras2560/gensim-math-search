@@ -3,16 +3,20 @@ Created on Jul 20, 2017
 
 @author: d6fraser
 '''
-from math_corpus import MathCorpus
-from create_models import create_model, TestCreateModels
+from create_models import create_model
 from query import Indexer, DocumentCollection, ArxivQueries,\
                   ExpectedResults, Query
 from bs4 import BeautifulSoup
 from gensim import models, similarities, corpora
+from create_index import create_index
+from math_corpus import format_paragraph
+from nltk.stem.porter import PorterStemmer
 import unittest
 import os
 import shutil
-from create_index import create_index
+import logging
+logging.basicConfig(format='%(levelname)s : %(message)s', level=logging.INFO)
+logging.root.level = logging.INFO
 
 
 class TestQuery(unittest.TestCase):
@@ -29,7 +33,7 @@ class TestQuery(unittest.TestCase):
     def testConstructor(self):
         q = Query(self.topic)
         self.assertEqual("NTCIR12-MathWiki-1", str(q))
-        expect = " symbol  ('v!ζ','!0','n')"
+        expect = "symbol ('v!ζ','!0','n')"
         self.assertEqual(expect, q.get_words())
 
 
@@ -126,19 +130,6 @@ class TestIndexer(unittest.TestCase):
                      lsi=True,
                      tfidf=True,
                      hdp=True)
-        # load up the models
-        self.dictionary = corpora.Dictionary.load(os.path.join(self.models,
-                                                               "corpus.dict"))
-        self.corp = corpora.MmCorpus(os.path.join(self.models,
-                                                  "corpus.mm"))
-        path = os.path.join(self.models, "model.lda")
-        self.lda = models.LdaModel.load(path)
-        path = os.path.join(self.models, "model.lsi")
-        self.lsi = models.LsiModel.load(path)
-        path = os.path.join(self.models, "model.tfidf")
-        self.tfidf = models.TfidfModel.load(path)
-        path = os.path.join(self.models, "model.hdp")
-        self.hdp = models.HdpModel.load(path)
         # create the indexes
         create_index(self.corpus,
                      self.index,
@@ -148,13 +139,27 @@ class TestIndexer(unittest.TestCase):
                      lsi=True,
                      tfidf=True,
                      hdp=True)
+        # load the corpus and dictionary
+        d_path = os.path.join(self.models, "corpus.dict")
+        self.dictionary = corpora.Dictionary.load(d_path)
+        self.corp = corpora.MmCorpus(os.path.join(self.models,
+                                                  "corpus.mm"))
+        # load the models
+        path = os.path.join(self.models, "model.tfidf")
+        self.tfidf = models.TfidfModel.load(path)
+        path = os.path.join(self.models, "model.lda")
+        self.lda = models.LdaModel.load(path)
+        path = os.path.join(self.models, "model.lsi")
+        self.lsi = models.LsiModel.load(path)
+        path = os.path.join(self.models, "model.hdp")
+        self.hdp = models.HdpModel.load(path)
         # load the indexes
+        path = os.path.join(self.index, "test-tfidf.index")
+        self.tfidf_index = similarities.Similarity.load(path)
         path = os.path.join(self.index, "test-lsi.index")
         self.lsi_index = similarities.Similarity.load(path)
         path = os.path.join(self.index, "test-lda.index")
         self.lda_index = similarities.Similarity.load(path)
-        path = os.path.join(self.index, "test-tfidf.index")
-        self.tfidf_index = similarities.Similarity.load(path)
         path = os.path.join(self.index, "test-hdp.index")
         self.hdp_index = similarities.Similarity.load(path)
 
@@ -167,6 +172,8 @@ class TestIndexer(unittest.TestCase):
             shutil.rmtree(self.models)
         if os.path.exists(self.index):
             shutil.rmtree(self.index)
+        if os.path.exists(os.path.join(os.getcwd(), "testIndex.0")):
+            os.remove(os.path.join(os.getcwd(), "testIndex.0"))
 
     def testSearchLSI(self):
         indexer = Indexer(self.dictionary,
@@ -179,24 +186,19 @@ class TestIndexer(unittest.TestCase):
               """
         query = Query(BeautifulSoup(doc))
         results = indexer.search(query)
-        expect = [os.path.join(self.corpus, '1.html'),
+        expect = [os.path.join(self.corpus, '3.html'),
+                  os.path.join(self.corpus, '1.html'),
                   os.path.join(self.corpus, '4.html'),
+                  os.path.join(self.corpus, '5.html'),
                   os.path.join(self.corpus, '2.html'),
-                  os.path.join(self.corpus, '6.html'),
-                  os.path.join(self.corpus, '7.html'),
-                  os.path.join(self.corpus, '8.html'),
                   os.path.join(self.corpus, '9.html'),
-                  os.path.join(self.corpus, '3.html'),
-                  os.path.join(self.corpus, '5.html')
+                  os.path.join(self.corpus, '8.html'),
+                  os.path.join(self.corpus, '7.html'),
+                  os.path.join(self.corpus, '6.html')
                   ]
         self.debug = True
         self.log(expect)
         self.log(results)
-        print("Topics")
-        self.lsi.print_debug(2)
-        print(self.lsi)
-        for i in self.lsi.print_topics():
-            print(i)
         self.assertEqual(expect, results)
         doc = """
                 <num>test-query</num>
@@ -207,20 +209,44 @@ class TestIndexer(unittest.TestCase):
         expect = [os.path.join(self.corpus, '6.html'),
                   os.path.join(self.corpus, '7.html'),
                   os.path.join(self.corpus, '8.html'),
-                  os.path.join(self.corpus, '4.html'),
-                  os.path.join(self.corpus, '1.html'),
-                  os.path.join(self.corpus, '5.html'),
+                  os.path.join(self.corpus, '9.html'),
                   os.path.join(self.corpus, '2.html'),
+                  os.path.join(self.corpus, '5.html'),
                   os.path.join(self.corpus, '3.html'),
-                  os.path.join(self.corpus, '9.html')
+                  os.path.join(self.corpus, '1.html'),
+                  os.path.join(self.corpus, '4.html')
                   ]
+        self.log(expect)
+        self.log(results)
         self.assertEqual(expect, results)
 
     def testSearchTFIDF(self):
-        indexer = Indexer(MathCorpus(self.corpus).dictionary,
+        indexer = Indexer(self.dictionary,
                           self.tfidf,
                           self.tfidf_index,
                           self.corpus)
+        doc = "Human computer interaction"
+        vec_bow = self.dictionary.doc2bow(format_paragraph(doc,
+                                                           PorterStemmer()))
+        self.log(self.tfidf)
+        vec_tfidf = self.tfidf[vec_bow]
+        index = similarities.Similarity.load(os.path.join(self.index,
+                                                          "test-tfidf.index"))
+        sims = index[vec_tfidf]
+        sims = sorted(enumerate(sims), key=lambda item: -item[1])
+        self.log(sims)
+        expected = [(0, 0.81649655),
+                    (3, 0.34777319),
+                    (1, 0.31412902),
+                    (2, 0.0),
+                    (4, 0.0),
+                    (5, 0.0),
+                    (6, 0.0),
+                    (7, 0.0),
+                    (8, 0.0)]
+        for index, t in enumerate(sims):
+            self.assertEqual(expected[index][0], t[0])
+            self.assertAlmostEqual(expected[index][1], t[1])
         doc = """
                 <num>test-query</num>
                 <keyword>Human computer interaction<keyword>

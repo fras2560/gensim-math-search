@@ -31,6 +31,7 @@ def create_index(corpus_path,
     Parameters:
         corpus_path: the path to the corpus directory (os.path)
         output_path: the directory path where index(s) will be saved (os.path)
+                     Note indexes each need their own folder
         model_path: the directory path with the models to be used (os.path)
                     The model path should have a corpus.dict and corpus.mm too
                     Use create_models.py
@@ -46,25 +47,29 @@ def create_index(corpus_path,
     # depending on the model the number of features changes
     if tfidf:
         model = models.TfidfModel.load(os.path.join(model_path, "model.tfidf"))
-        index = similarities.Similarity(output_path,
+        op = os.path.join(output_path, name + "tfidf")
+        index = similarities.Similarity(op,
                                         model[mc],
                                         num_features=len(dictionary))
         index.save(os.path.join(output_path, name + "-tfidf.index"))
     if lda:
         model = models.LdaModel.load(os.path.join(model_path, "model.lda"))
-        index = similarities.Similarity(output_path,
+        op = os.path.join(output_path, name + "lda")
+        index = similarities.Similarity(op,
                                         model[mc],
                                         num_features=model.num_topics)
         index.save(os.path.join(output_path, name + "-lda.index"))
     if lsi:
         model = models.LsiModel.load(os.path.join(model_path, "model.lsi"))
-        index = similarities.Similarity(output_path,
+        op = os.path.join(output_path, name + "lsi")
+        index = similarities.Similarity(op,
                                         model[mc],
                                         num_features=len(dictionary))
         index.save(os.path.join(output_path, name + "-lsi.index"))
     if hdp:
         model = models.HdpModel.load(os.path.join(model_path, "model.hdp"))
-        index = similarities.Similarity(output_path,
+        op = os.path.join(output_path, name + "hdp")
+        index = similarities.Similarity(op,
                                         model[mc],
                                         num_features=len(dictionary))
         index.save(os.path.join(output_path, name + "-hdp.index"))
@@ -108,7 +113,8 @@ class Test(unittest.TestCase):
         create_index(self.corpus, self.output, self.output, "test", lda=True)
         index = similarities.Similarity.load(os.path.join(self.output,
                                                           "test-lda.index"))
-        p = "(stored under {})".format(str(self.output))
+        op = os.path.join(self.output, "testlda")
+        p = "(stored under {})".format(str(op))
         expect = "Similarity index with 9 documents in 1 shards {}".format(p)
         self.assertEqual(expect, str(index))
 
@@ -118,7 +124,8 @@ class Test(unittest.TestCase):
         create_index(self.corpus, self.output, self.output, "test", lsi=True)
         index = similarities.Similarity.load(os.path.join(self.output,
                                                           "test-lsi.index"))
-        p = "(stored under {})".format(str(self.output))
+        op = os.path.join(self.output, "testlsi")
+        p = "(stored under {})".format(str(op))
         expect = "Similarity index with 9 documents in 1 shards {}".format(p)
         self.assertEqual(expect, str(index))
         # search with the index
@@ -147,18 +154,80 @@ class Test(unittest.TestCase):
         create_index(self.corpus, self.output, self.output, "test", hdp=True)
         index = similarities.Similarity.load(os.path.join(self.output,
                                                           "test-hdp.index"))
-        p = "(stored under {})".format(str(self.output))
+        op = os.path.join(self.output, "testhdp")
+        p = "(stored under {})".format(str(op))
         expect = "Similarity index with 9 documents in 1 shards {}".format(p)
         self.assertEqual(expect, str(index))
 
+    def testAllIndexes(self):
+        tfidf_model = models.LsiModel.load(os.path.join(self.output,
+                                                        "model.tfidf"))
+        create_index(self.corpus,
+                     self.output,
+                     self.output,
+                     "test",
+                     tfidf=True,
+                     lda=True,
+                     lsi=True,
+                     hdp=True)
+        index = similarities.Similarity.load(os.path.join(self.output,
+                                                          "test-tfidf.index"))
+        op = os.path.join(self.output, "testtfidf")
+        p = "(stored under {})".format(str(op))
+        expect = "Similarity index with 9 documents in 1 shards {}".format(p)
+        self.assertEqual(expect, str(index))
+        doc = "Human computer interaction"
+        vec_bow = self.dictionary.doc2bow(format_paragraph(doc,
+                                                           PorterStemmer()))
+        self.log(tfidf_model)
+        vec_tfidf = tfidf_model[vec_bow]
+        sims = index[vec_tfidf]
+        print(sims)
+        sims = sorted(enumerate(sims), key=lambda item: -item[1])
+        expected = [(0, 0.81649655),
+                    (3, 0.34777319),
+                    (1, 0.31412902),
+                    (2, 0.0),
+                    (4, 0.0),
+                    (5, 0.0),
+                    (6, 0.0),
+                    (7, 0.0),
+                    (8, 0.0)]
+        self.log(sims)
+        for index, t in enumerate(sims):
+            self.assertEqual(expected[index][0], t[0])
+            self.assertAlmostEqual(expected[index][1], t[1])
+
     def testTFIDF(self):
+        tfidf_model = models.LsiModel.load(os.path.join(self.output,
+                                                        "model.tfidf"))
         create_index(self.corpus, self.output, self.output, "test", tfidf=True)
         index = similarities.Similarity.load(os.path.join(self.output,
                                                           "test-tfidf.index"))
-        p = "(stored under {})".format(str(self.output))
+        op = os.path.join(self.output, "testtfidf")
+        p = "(stored under {})".format(str(op))
         expect = "Similarity index with 9 documents in 1 shards {}".format(p)
         self.assertEqual(expect, str(index))
-
+        doc = "Human computer interaction"
+        vec_bow = self.dictionary.doc2bow(format_paragraph(doc,
+                                                           PorterStemmer()))
+        self.log(tfidf_model)
+        vec_tfidf = tfidf_model[vec_bow]
+        sims = index[vec_tfidf]
+        sims = sorted(enumerate(sims), key=lambda item: -item[1])
+        expected = [(0, 0.81649655),
+                    (3, 0.34777319),
+                    (1, 0.31412902),
+                    (2, 0.0),
+                    (4, 0.0),
+                    (5, 0.0),
+                    (6, 0.0),
+                    (7, 0.0),
+                    (8, 0.0)]
+        self.log(sims)
+        for index, t in enumerate(sims):
+            self.assertEqual(expected[index][0], t[0])
+            self.assertAlmostEqual(expected[index][1], t[1])
 
 if __name__ == "__main__":
     descp = """

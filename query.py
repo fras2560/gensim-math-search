@@ -14,13 +14,22 @@ import unittest
 PR_SCORE = 0
 R_SCORE = 2.0
 
+def reverse_lookup(dictionary, value):
+    for key, v in dictionary.items():
+        if value == v:
+            return key
+
 
 class Queries():
-    """A class that shows what needs to be implemented
+    """An Abstract class that shows what needs to be implemented
     to be used to check results for a specific benchmark
+
+    To be Implemented:
+        __init__(self, queries, results)
+        test_indexer(self, indexer, output, top_k=10)
     """
     def __init__(self, queries, results):
-        pass
+        raise NotImplementedError("Constructor needs to be implemented")
 
     def test_indexer(self, indexer, output, top_k=10):
         """Outputs the score for each query
@@ -30,7 +39,7 @@ class Queries():
             output: the path to the file to output to (path)
             top_k: the number of documents to retrieve
         """
-        pass
+        raise NotImplementedError("test_indexer needs to be implemented")
 
 
 class Indexer():
@@ -52,15 +61,13 @@ class Indexer():
         # get the vec of the query
         vec_bow = self.dictionary.doc2bow(query.get_words().split(" "))
         vec_model = self.model[vec_bow]
-        # now search for it
         sims = self.index[vec_model]
-        print(sims)
         if (len(sims) > 0):
             if isinstance(sims[0], list) or isinstance(sims[0], tuple):
-                sims = sorted(self.index[vec_model],
+                sims = sorted(sims,
                               key=lambda item: -item[1])
             else:
-                sims = sorted(enumerate(self.index[vec_model]),
+                sims = sorted(enumerate(sims),
                               key=lambda item: -item[1])
         # build up the list of document names
         documents = []
@@ -181,6 +188,8 @@ class Query():
             formulas.append(convert_math_expression(str(formula)))
         self.result = keywords + formulas
         self.name = topic.num.text
+        self.result = [result for result in self.result
+                       if result != ""]
 
     def get_words(self):
         """Returns the clauses of the query (str)
