@@ -257,7 +257,7 @@ if __name__ == "__main__":
     parser.add_argument("corpus",
                         help="The path to Math Corpus directory (html, xhtml)",
                         action="store")
-    prompt = "The path to Model directory (created by create_index)"
+    prompt = "The path to Model directory (created by create_model)"
     parser.add_argument("model",
                         help=prompt,
                         action="store")
@@ -266,14 +266,14 @@ if __name__ == "__main__":
                         action="store")
     parser.add_argument("name",
                         help="The name of the index")
-    parser.add_argument("-d", "--dictionary",
-                        help="The filepath to the saved dictionary",
-                        dest="dictionary",
-                        default=None)
     args = parser.parse_args()
     # need to load the model
     create_index(args.corpus,
                  args.output,
                  args.model,
                  args.name,
-                 dictionary=args.dictionary)
+                 lda=args.lda,
+                 lsi=args.lsi,
+                 tfidf=args.tfidf,
+                 hdp=args.hdp
+                 )

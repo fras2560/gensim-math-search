@@ -271,6 +271,48 @@ class TestIndexer(unittest.TestCase):
                   os.path.join(self.corpus, '8.html')]
         self.assertEqual(results, expect)
 
+
+class TestArxiv(TestIndexer):
+    def testTFIDFIndexer(self):
+        q = os.path.join(os.getcwd(), "Tutorial", "testQueries.html")
+        r = os.path.join(os.getcwd(), "Tutorial", "results.txt")
+        aq = ArxivQueries(q, r)
+        m = os.path.join(self.index, "mock.txt")
+        indexer = Indexer(self.dictionary,
+                          self.tfidf,
+                          self.tfidf_index,
+                          self.corpus)
+        aq.test_indexer(indexer, m, top_k=2)
+        expect = ["test-1,2,2", "test-2,2,2"]
+        with open(m) as f:
+            for index, line in enumerate(f):
+                self.assertEqual(expect[index], line.strip())
+        aq.test_indexer(indexer, m, top_k=5)
+        expect = ["test-1,3,3", "test-2,3,3"]
+        with open(m) as f:
+            for index, line in enumerate(f):
+                self.assertEqual(expect[index], line.strip())
+
+    def testLSIIndexer(self):
+        q = os.path.join(os.getcwd(), "Tutorial", "testQueries.html")
+        r = os.path.join(os.getcwd(), "Tutorial", "results.txt")
+        aq = ArxivQueries(q, r)
+        m = os.path.join(self.index, "mock.txt")
+        indexer = Indexer(self.dictionary,
+                          self.lsi,
+                          self.lsi_index,
+                          self.corpus)
+        aq.test_indexer(indexer, m, top_k=2)
+        expect = ["test-1,2,2", "test-2,2,2"]
+        with open(m) as f:
+            for index, line in enumerate(f):
+                self.assertEqual(expect[index], line.strip())
+        aq.test_indexer(indexer, m, top_k=5)
+        expect = ["test-1,4,5", "test-2,4,4"]
+        with open(m) as f:
+            for index, line in enumerate(f):
+                self.assertEqual(expect[index], line.strip())
+
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

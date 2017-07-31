@@ -203,6 +203,7 @@ if __name__ == "__main__":
             Author: Dallas Fraser (d6fraser@uwaterloo.ca)
             """
     parser = argparse.ArgumentParser(description=descp)
+
     parser.add_argument('-lsi',
                         dest="lsi",
                         action="store_true",
@@ -229,9 +230,15 @@ if __name__ == "__main__":
     parser.add_argument("output",
                         help="The path to directory where model will be saved",
                         action="store")
+    parser.add_argument('num_topics',
+                        action="store",
+                        type=int,
+                        default=500,
+                        help="The number of topics")
     args = parser.parse_args()
     create_model(args.corpus,
                  args.output,
+                 num_topics=args.num_topics,
                  tfidf=args.tfidf,
                  lda=args.lda,
                  lsi=args.lsi,

@@ -12,6 +12,7 @@ from math_corpus import convert_math_expression, format_paragraph
 import sys
 import os
 import unittest
+import argparse
 
 PR_SCORE = 0
 R_SCORE = 2.0
@@ -112,9 +113,8 @@ class ArxivQueries(Queries):
         """
         with open(queries) as doc:
             self.soup = BeautifulSoup(doc)
-            self.quries = []
-            for topic in self.soup.findall("topic"):
-                print(topic)
+            self.queries = []
+            for topic in self.soup.find_all("topic"):
                 self.queries.append(Query(topic))
         with open(results) as doc:
             self.results = ExpectedResults(doc)
@@ -127,19 +127,20 @@ class ArxivQueries(Queries):
             output: the path to the file to output to (path)
             top_k: the number of documents to retrieve
         """
-        with open(output) as out_doc:
+        with open(output, "w+") as out_doc:
             for query in self.queries:
                 r_docs = 0
                 pr_docs = 0
                 results = indexer.search(query, top_k=top_k)
+                print(results)
                 for result in results:
                     score = self.results.find_score(query, result)
                     if score > PR_SCORE:
                         pr_docs += 1
                     if score > R_SCORE:
                         r_docs += 1
-            print("{},{},{}".format(query, r_docs, pr_docs),
-                  file=out_doc)
+                print("{},{},{}".format(query, r_docs, pr_docs),
+                      file=out_doc)
 
 
 class ExpectedResults():
@@ -223,5 +224,41 @@ class Query():
 
 
 if __name__ == "__main__":
-    # import sys;sys.argv = ['', 'Test.testName']
-    unittest.main()
+    descp = """
+            Test the Gensim index(s) created by create_index.py
+            Author: Dallas Fraser (d6fraser@uwaterloo.ca)
+            """
+    parser = argparse.ArgumentParser(description=descp)
+    parser.add_argument('-lsi',
+                        dest="lsi",
+                        action="store_true",
+                        default=False,
+                        help="Search with LSI Index")
+    parser.add_argument('-lda',
+                        dest="lda",
+                        action="store_true",
+                        help="Search with LDA Index",
+                        default=False)
+    parser.add_argument('-tfidf',
+                        dest="tfidf",
+                        action="store_true",
+                        help="Search with TFIDF Index",
+                        default=False)
+    parser.add_argument('-hdp',
+                        dest="hdp",
+                        action="store_true",
+                        help="Search with HDP Index",
+                        default=False)
+    prompt = "The path to Index directory (created by create_index)"
+    parser.add_argument("index",
+                        help=prompt,
+                        action="store")
+    prompt = "The name of the Index"
+    parser.add_argument("index_name",
+                        help=prompt,
+                        action="store")
+    prompt = "The path to Model directory (created by create_models)"
+    parser.add_argument("model",
+                        help=prompt,
+                        action="store")
+    args = parser.parse_args()

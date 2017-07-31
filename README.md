@@ -10,7 +10,7 @@ python XXX.py -h
 
 ### To create the Models
 ```
-python create_models.py ~/GT/tutorialDocuments ~/GT/testModel -lda -lsi -tfidf
+python create_models.py -lda -lsi -tfidf -hdp ~/GT/tutorialDocuments ~/GT/testModel
 ```
 
 ### To create a Index
