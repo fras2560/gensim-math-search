@@ -18,3 +18,8 @@ python create_models.py -lda -lsi -tfidf -hdp ~/GT/tutorialDocuments ~/GT/testMo
 python create_index.py ~/GT/tutorialDocuments ~ /GT/testIndex/ ~/GT/testModel/model.lda 2 LDA
 ```
 
+### To run a query
+```
+python query.py -tfidf -lsi ~/GT/data/indexes/ ntcir ~/GT/data/models/ ~/resources/documents/ ~/GT/data/results/ ~/resources/query/NTCIR12-Math-queries-participants.xml ~/resources/results/NTCIR12_Math-qrels_agg.dat
+```
+

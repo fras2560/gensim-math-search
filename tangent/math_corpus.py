@@ -7,7 +7,7 @@ Purpose: Used to parse math documents and gensim to iterate through them
 '''
 from gensim import corpora
 from six import iteritems
-from htmlStriper import strip_tags
+from tangent.htmlStriper import strip_tags
 import os
 import unittest
 from nltk.stem.porter import PorterStemmer
@@ -203,8 +203,9 @@ class ParseDocument(object):
 
 class TestMathCorpus(unittest.TestCase):
     def setUp(self):
-        self.fp = os.path.join(os.getcwd(), "test")
-        self.corpus = os.path.join(os.getcwd(), "tutorialDocuments")
+        cwd = os.path.dirname(os.getcwd())
+        self.fp = os.path.join(cwd, "testing", "test", "toyDocuments")
+        self.corpus = os.path.join(cwd, "testing", "test", "tutorialDocuments")
 
     def tearDown(self):
         pass
@@ -213,7 +214,9 @@ class TestMathCorpus(unittest.TestCase):
         mc = MathCorpus(self.fp)
         expected = [[(0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1)],
                     [(0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1)]]
+        print(mc.dictionary.token2id)
         for index, vector in enumerate(mc):
+            print(vector)
             self.assertEqual(expected[index], vector)
 
     def testTutorial(self):
@@ -226,7 +229,8 @@ class TestMathCorpus(unittest.TestCase):
 
 class TestMathDocument(unittest.TestCase):
     def setUp(self):
-        self.fp = os.path.join(os.getcwd(), "test")
+        cwd = os.path.dirname(os.getcwd())
+        self.fp = os.path.join(cwd, "testing", "test", "toyDocuments")
 
     def tearDown(self):
         pass

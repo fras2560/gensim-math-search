@@ -1,3 +1,4 @@
+
 '''
 Name: Dallas Fraser
 Email: d6fraser@uwaterloo.ca
@@ -8,7 +9,8 @@ Purpose: To allow a user to query and run the NTCIR-MathIR task
 from nltk.stem.porter import PorterStemmer
 from nltk.corpus import stopwords
 from bs4 import BeautifulSoup
-from math_corpus import convert_math_expression, format_paragraph
+from tangent.math_corpus import convert_math_expression, format_paragraph
+from gensim import corpora, models, similarities
 import sys
 import os
 import unittest
@@ -233,32 +235,91 @@ if __name__ == "__main__":
                         dest="lsi",
                         action="store_true",
                         default=False,
-                        help="Search with LSI Index")
+                        help="Build LSI Model")
     parser.add_argument('-lda',
                         dest="lda",
                         action="store_true",
-                        help="Search with LDA Index",
+                        help="Build LDA Model",
                         default=False)
     parser.add_argument('-tfidf',
                         dest="tfidf",
                         action="store_true",
-                        help="Search with TFIDF Index",
+                        help="Build TFIDF Model",
                         default=False)
     parser.add_argument('-hdp',
                         dest="hdp",
                         action="store_true",
-                        help="Search with HDP Index",
+                        help="Build HDP Model",
                         default=False)
-    prompt = "The path to Index directory (created by create_index)"
+    prompt = "The path to Index Folder (created by create_index)"
     parser.add_argument("index",
                         help=prompt,
                         action="store")
-    prompt = "The name of the Index"
-    parser.add_argument("index_name",
-                        help=prompt,
+    parser.add_argument("name",
+                        help=" The name of indexes",
                         action="store")
+    parser.add_argument('top_k', default=10, type=int,
+                        help='The number of results for each search',
+                        nargs='?')
     prompt = "The path to Model directory (created by create_models)"
     parser.add_argument("model",
                         help=prompt,
                         action="store")
+    parser.add_argument("corpus",
+                        help="The path to Math Corpus directory (html, xhtml)",
+                        action="store")
+    parser.add_argument("output",
+                        help="The path to output directory",
+                        action="store")
+    parser.add_argument("queries",
+                        help="The path to queries file",
+                        action="store")
+    parser.add_argument("results",
+                        help="The path to results file",
+                        action="store")
     args = parser.parse_args()
+    aq = ArxivQueries(args.queries, args.results)
+    dictionary = corpora.Dictionary.load(os.path.join(args.model,
+                                                      "corpus.dict"))
+    corpus = args.corpus
+    if args.tfidf:
+        tfidf = models.TfidfModel.load(os.path.join(args.model,
+                                                    "model.tfidf"))
+        name = args.name + "-tfidf.index"
+        tfidf_index = similarities.Similarity.load(os.path.join(args.index,
+                                                                name))
+        indexer = Indexer(dictionary, tfidf, tfidf_index, corpus)
+        aq.test_indexer(indexer,
+                        os.path.join(args.output, "tfidf.txt"),
+                        top_k=args.top_k
+                        )
+    if args.lda:
+        lda = models.LdaModel.load(os.path.join(args.model,
+                                                "model.lda"))
+        name = args.name + "-lda.index"
+        lda_index = similarities.Similarity.load(os.path.join(args.index,
+                                                              name))
+        indexer = Indexer(dictionary, lda, lda_index, corpus)
+        aq.test_indexer(indexer,
+                        os.path.join(args.output, "lda.txt"),
+                        top_k=args.top_k)
+    if args.lsi:
+        lsi = models.LsiModel.load(os.path.join(args.model,
+                                                "model.lsi"))
+        name = args.name + "-lsi.index"
+        lsi_index = similarities.Similarity.load(os.path.join(args.index,
+                                                              name))
+        indexer = Indexer(dictionary, lsi, lsi_index, corpus)
+        aq.test_indexer(indexer,
+                        os.path.join(args.output, "lsi.txt"),
+                        top_k=args.top_k)
+    if args.hdp:
+        hdp = models.HdpModel.load(os.path.join(args.model,
+                                                "model.hdp"))
+        name = args.name + "-hdp.index"
+        hdp_index = similarities.Similarity.load(os.path.join(args.index,
+                                                              name))
+        indexer = Indexer(dictionary, hdp, hdp_index, corpus)
+        aq.test_indexer(indexer,
+                        os.path.join(args.output, "hdp.txt"),
+                        top_k=args.top_k)

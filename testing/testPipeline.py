@@ -5,13 +5,13 @@ Date: 2017-07-27
 Project: Tangent GT
 Purpose: Tests the pipeline from modeling to indexing
 '''
-from create_models import create_model
-from query import Indexer, DocumentCollection, ArxivQueries,\
-                  ExpectedResults, Query
+from scripts.create_models import create_model
+from ranking.query import Indexer, DocumentCollection, ArxivQueries,\
+                    ExpectedResults, Query
 from bs4 import BeautifulSoup
 from gensim import models, similarities, corpora
-from create_index import create_index
-from math_corpus import format_paragraph
+from scripts.create_index import create_index
+from tangent.math_corpus import format_paragraph
 from nltk.stem.porter import PorterStemmer
 import unittest
 import os
@@ -83,7 +83,7 @@ class TestExpectedResults(unittest.TestCase):
 
 class TestDocumentCollection(unittest.TestCase):
     def setUp(self):
-        self.directory = os.path.join(os.getcwd(), "tutorialDocuments")
+        self.directory = os.path.join(os.getcwd(), "test", "tutorialDocuments")
         self.dc = DocumentCollection(self.directory)
 
     def tearDown(self):
@@ -112,7 +112,7 @@ class TestDocumentCollection(unittest.TestCase):
 class TestIndexer(unittest.TestCase):
     def setUp(self):
         self.debug = True
-        self.corpus = os.path.join(os.getcwd(), "tutorialDocuments")
+        self.corpus = os.path.join(os.getcwd(), "test", "tutorialDocuments")
         self.models = os.path.join(os.getcwd(), "testModels")
         self.index = os.path.join(os.getcwd(), "testIndex")
         if not os.path.exists(self.models):
@@ -274,8 +274,8 @@ class TestIndexer(unittest.TestCase):
 
 class TestArxiv(TestIndexer):
     def testTFIDFIndexer(self):
-        q = os.path.join(os.getcwd(), "Tutorial", "testQueries.html")
-        r = os.path.join(os.getcwd(), "Tutorial", "results.txt")
+        q = os.path.join(os.getcwd(), "test", "Tutorial", "testQueries.html")
+        r = os.path.join(os.getcwd(), "test", "Tutorial", "results.txt")
         aq = ArxivQueries(q, r)
         m = os.path.join(self.index, "mock.txt")
         indexer = Indexer(self.dictionary,
@@ -294,8 +294,8 @@ class TestArxiv(TestIndexer):
                 self.assertEqual(expect[index], line.strip())
 
     def testLSIIndexer(self):
-        q = os.path.join(os.getcwd(), "Tutorial", "testQueries.html")
-        r = os.path.join(os.getcwd(), "Tutorial", "results.txt")
+        q = os.path.join(os.getcwd(), "test", "Tutorial", "testQueries.html")
+        r = os.path.join(os.getcwd(), "test", "Tutorial", "results.txt")
         aq = ArxivQueries(q, r)
         m = os.path.join(self.index, "mock.txt")
         indexer = Indexer(self.dictionary,

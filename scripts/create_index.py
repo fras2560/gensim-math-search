@@ -1,11 +1,13 @@
 '''
-Created on Jul 24, 2017
-
-@author: d6fraser
+Name: Dallas Fraser
+Email: d6fraser@uwaterloo.ca
+Date: 2017-07-27
+Project: Tangent GT
+Purpose: To create the indexes used for querying and similarity
 '''
 from gensim import similarities, models, corpora
-from create_models import create_model
-from math_corpus import format_paragraph
+from scripts.create_models import create_model
+from tangent.math_corpus import format_paragraph
 from nltk.stem.porter import PorterStemmer
 import unittest
 import os
@@ -62,14 +64,14 @@ def create_index(corpus_path,
         op = os.path.join(output_path, name + "lsi")
         index = similarities.Similarity(op,
                                         model[mc],
-                                        num_features=len(dictionary))
+                                        num_features=model.num_topics)
         index.save(os.path.join(output_path, name + "-lsi.index"))
     if hdp:
         model = models.HdpModel.load(os.path.join(model_path, "model.hdp"))
         op = os.path.join(output_path, name + "hdp")
         index = similarities.Similarity(op,
                                         model[mc],
-                                        num_features=len(dictionary))
+                                        num_features=model.m_T)
         index.save(os.path.join(output_path, name + "-hdp.index"))
 
 

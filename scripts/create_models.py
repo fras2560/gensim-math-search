@@ -6,7 +6,7 @@ Project: Tangent GT
 Purpose: To create the models to be used for indexing
 '''
 
-from math_corpus import MathCorpus, format_paragraph
+from tangent.math_corpus import MathCorpus, format_paragraph
 from gensim import models, corpora
 from nltk.stem.porter import PorterStemmer
 import os
