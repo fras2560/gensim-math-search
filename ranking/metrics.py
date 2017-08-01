@@ -6,6 +6,7 @@ Created on Aug 1, 2017
 from scipy.stats import entropy
 from numpy.linalg import norm
 from gensim.matutils import sparse2full
+from testing.test_pipeline import TestIndexer
 import numpy as np
 import unittest
 
