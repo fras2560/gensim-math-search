@@ -73,15 +73,15 @@ class Test(unittest.TestCase):
         vec_lsi = lsi_model[vec_bow]
         sims = index[vec_lsi]
         sims = sorted(enumerate(sims), key=lambda item: -item[1])
-        expected = [(2, 0.99994278),
-                    (0, 0.99994081),
-                    (3, 0.999879),
-                    (4, 0.99935204),
-                    (1, 0.99467087),
-                    (8, 0.1938726),
-                    (7, -0.023664713),
+        expected = [(0, 0.99994081),
+                    (2, 0.99990785),
+                    (3, 0.99984384),
+                    (4, 0.9992786),
+                    (1, 0.99330217),
+                    (8, 0.22248439),
+                    (7, -0.016480923),
                     (6, -0.0515742),
-                    (5, -0.088042185)]
+                    (5, -0.08804217)]
         self.log(sims)
         for index, t in enumerate(sims):
             self.assertEqual(expected[index][0], t[0])

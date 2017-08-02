@@ -40,11 +40,12 @@ def create_index(corpus_path,
                                                       "corpus.dict"))
     mc = corpora.MmCorpus(os.path.join(model_path, "corpus.mm"))
     # depending on the model the number of features changes
+    tfidf_model = models.TfidfModel.load(os.path.join(model_path,
+                                                      "model.tfidf"))
     if tfidf:
-        model = models.TfidfModel.load(os.path.join(model_path, "model.tfidf"))
         op = os.path.join(output_path, name + "tfidf")
         index = similarities.Similarity(op,
-                                        model[mc],
+                                        tfidf_model[mc],
                                         num_features=len(dictionary))
         index.save(os.path.join(output_path, name + "-tfidf.index"))
     if lda:
@@ -58,7 +59,7 @@ def create_index(corpus_path,
         model = models.LsiModel.load(os.path.join(model_path, "model.lsi"))
         op = os.path.join(output_path, name + "lsi")
         index = similarities.Similarity(op,
-                                        model[mc],
+                                        model[tfidf_model[mc]],
                                         num_features=model.num_topics)
         index.save(os.path.join(output_path, name + "-lsi.index"))
     if hdp:

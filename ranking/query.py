@@ -7,13 +7,10 @@ Project: Tangent GT
 Purpose: To allow a user to query and run the NTCIR-MathIR task
 '''
 from nltk.stem.porter import PorterStemmer
-from nltk.corpus import stopwords
 from bs4 import BeautifulSoup
 from tangent.math_corpus import convert_math_expression, format_paragraph
 from gensim import corpora, models, similarities
-import sys
 import os
-import unittest
 import argparse
 
 PR_SCORE = 0
@@ -67,6 +64,7 @@ class Indexer():
         # get the vec of the query
         vec_bow = self.dictionary.doc2bow(query.get_words().split(" "))
         vec_model = self.model[vec_bow]
+        print(type(self.model))
         sims = self.index[vec_model]
         if (len(sims) > 0):
             if isinstance(sims[0], list) or isinstance(sims[0], tuple):

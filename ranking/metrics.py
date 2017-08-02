@@ -6,9 +6,7 @@ Created on Aug 1, 2017
 from scipy.stats import entropy
 from numpy.linalg import norm
 from gensim.matutils import sparse2full
-from testing.test_pipeline import TestIndexer
 import numpy as np
-import unittest
 
 
 def jensen_shannon_divergence(vec1, vec2, model):
@@ -35,21 +33,3 @@ def hellinger_distance(vec1, vec2, model):
     dense2 = sparse2full(vec2, model.num_topics)
     sim = np.sqrt(0.5 * ((np.sqrt(dense1) - np.sqrt(dense2))**2).sum())
     return sim
-
-
-class Test(unittest.TestCase):
-    def setUp(self):
-        self.i1 = [[1, 0], [0, 1]]
-        self.ni1 = [[0, 1], [1, 0]]
-        self.i2 = [[2, 0], [0, 2]]
-        self.all1 = [[1, 1], [1, 1]]
-
-    def tearDown(self):
-        pass
-
-    def testJensenShannonDivergence(self):
-        
-
-if __name__ == "__main__":
-    # import sys;sys.argv = ['', 'Test.testName']
-    unittest.main()
