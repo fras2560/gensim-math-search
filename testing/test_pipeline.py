@@ -181,7 +181,8 @@ class TestIndexer(unittest.TestCase):
         indexer = Indexer(self.dictionary,
                           self.lsi,
                           self.lsi_index,
-                          self.corpus)
+                          self.corpus,
+                          tfidf=self.tfidf)
         doc = """
                 <num>test-query</num>
                 <keyword>Human computer interaction<keyword>
@@ -301,7 +302,8 @@ class TestArxiv(TestIndexer):
         indexer = Indexer(self.dictionary,
                           self.lsi,
                           self.lsi_index,
-                          self.corpus)
+                          self.corpus,
+                          tfidf=self.tfidf)
         aq.test_indexer(indexer, m, top_k=2)
         expect = ["test-1,2,2", "test-2,2,2"]
         with open(m) as f:

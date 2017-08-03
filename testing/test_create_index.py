@@ -56,6 +56,8 @@ class Test(unittest.TestCase):
         self.assertEqual(expect, str(index))
 
     def testLSI(self):
+        tfidf_model = models.TfidfModel.load(os.path.join(self.output,
+                                                          "model.tfidf"))
         lsi_model = models.LsiModel.load(os.path.join(self.output,
                                                       "model.lsi"))
         create_index(self.corpus, self.output, self.output, "test", lsi=True)
@@ -70,7 +72,7 @@ class Test(unittest.TestCase):
         vec_bow = self.dictionary.doc2bow(format_paragraph(doc,
                                                            PorterStemmer()))
         self.log(lsi_model)
-        vec_lsi = lsi_model[vec_bow]
+        vec_lsi = lsi_model[tfidf_model[vec_bow]]
         sims = index[vec_lsi]
         sims = sorted(enumerate(sims), key=lambda item: -item[1])
         expected = [(0, 0.99994081),

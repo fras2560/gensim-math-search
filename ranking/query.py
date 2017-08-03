@@ -23,6 +23,10 @@ def reverse_lookup(dictionary, value):
             return key
 
 
+class LSIException(Exception):
+    pass
+
+
 class Queries():
     """An Abstract class that shows what needs to be implemented
     to be used to check results for a specific benchmark
@@ -46,8 +50,11 @@ class Queries():
 
 
 class Indexer():
-    def __init__(self, dictionary, model, index, corpus_path):
+    def __init__(self, dictionary, model, index, corpus_path, tfidf=None):
+        if isinstance(model, models.LsiModel) and tfidf is None:
+            raise LSIException("LSI needs tfidf to be supplied")
         self.model = model
+        self.tfidf = tfidf
         self.dictionary = dictionary
         self.index = index
         self.collection = DocumentCollection(corpus_path)
@@ -63,8 +70,14 @@ class Indexer():
         self.index.num_best = top_k
         # get the vec of the query
         vec_bow = self.dictionary.doc2bow(query.get_words().split(" "))
-        vec_model = self.model[vec_bow]
-        print(type(self.model))
+        
+        print(type(self.model),
+              isinstance(self.model, models.LsiModel))
+        if isinstance(self.model, models.LsiModel):
+            print("here")
+            vec_model = self.model[self.tfidf[vec_bow]]
+        else:
+            vec_model = self.model[vec_bow]
         sims = self.index[vec_model]
         if (len(sims) > 0):
             if isinstance(sims[0], list) or isinstance(sims[0], tuple):
