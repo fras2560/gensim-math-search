@@ -5,6 +5,8 @@ Date: 2017-07-27
 Project: Tangent GT
 Purpose: To create the models to be used for indexing
 '''
+import sys
+sys.path.append("..") # Adds higher directory to python modules path.
 from tangent.math_corpus import MathCorpus
 from gensim import models, corpora
 import os
@@ -79,17 +81,15 @@ if __name__ == "__main__":
                         action="store_true",
                         help="Build HDP Model",
                         default=False)
+    parser.add_argument('num_topics', default=500, type=int,
+                        help='The number of results for each search',
+                        nargs='?')
     parser.add_argument("corpus",
                         help="The path to Math Corpus directory (html, xhtml)",
                         action="store")
     parser.add_argument("output",
                         help="The path to directory where model will be saved",
                         action="store")
-    parser.add_argument('num_topics',
-                        action="store",
-                        type=int,
-                        default=500,
-                        help="The number of topics")
     args = parser.parse_args()
     create_model(args.corpus,
                  args.output,

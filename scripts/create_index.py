@@ -5,6 +5,8 @@ Date: 2017-07-27
 Project: Tangent GT
 Purpose: To create the indexes used for querying and similarity
 '''
+import sys
+sys.path.append("..") # Adds higher directory to python modules path.
 from gensim import similarities, models, corpora
 import os
 import argparse
