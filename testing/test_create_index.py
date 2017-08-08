@@ -47,10 +47,10 @@ class Test(unittest.TestCase):
             os.remove(os.path.join(os.getcwd(), "testIndex.0"))
 
     def testLDA(self):
-        create_index(self.corpus, self.output, self.output, "test", lda=True)
+        create_index(self.corpus, self.output, self.output, lda=True)
         index = similarities.Similarity.load(os.path.join(self.output,
-                                                          "test-lda.index"))
-        op = os.path.join(self.output, "testlda")
+                                                          "index.lda"))
+        op = os.path.join(self.output, "lda")
         p = "(stored under {})".format(str(op))
         expect = "Similarity index with 9 documents in 1 shards {}".format(p)
         self.assertEqual(expect, str(index))
@@ -62,8 +62,8 @@ class Test(unittest.TestCase):
                                                       "model.lsi"))
         create_index(self.corpus, self.output, self.output, "test", lsi=True)
         index = similarities.Similarity.load(os.path.join(self.output,
-                                                          "test-lsi.index"))
-        op = os.path.join(self.output, "testlsi")
+                                                          "index.lsi"))
+        op = os.path.join(self.output, "lsi")
         p = "(stored under {})".format(str(op))
         expect = "Similarity index with 9 documents in 1 shards {}".format(p)
         self.assertEqual(expect, str(index))
@@ -90,10 +90,10 @@ class Test(unittest.TestCase):
             self.assertAlmostEqual(expected[index][1], t[1], delta=0.001)
 
     def testHDP(self):
-        create_index(self.corpus, self.output, self.output, "test", hdp=True)
+        create_index(self.corpus, self.output, self.output, hdp=True)
         index = similarities.Similarity.load(os.path.join(self.output,
-                                                          "test-hdp.index"))
-        op = os.path.join(self.output, "testhdp")
+                                                          "index.hdp"))
+        op = os.path.join(self.output, "hdp")
         p = "(stored under {})".format(str(op))
         expect = "Similarity index with 9 documents in 1 shards {}".format(p)
         self.assertEqual(expect, str(index))
@@ -104,14 +104,13 @@ class Test(unittest.TestCase):
         create_index(self.corpus,
                      self.output,
                      self.output,
-                     "test",
                      tfidf=True,
                      lda=True,
                      lsi=True,
                      hdp=True)
         index = similarities.Similarity.load(os.path.join(self.output,
-                                                          "test-tfidf.index"))
-        op = os.path.join(self.output, "testtfidf")
+                                                          "index.tfidf"))
+        op = os.path.join(self.output, "tfidf")
         p = "(stored under {})".format(str(op))
         expect = "Similarity index with 9 documents in 1 shards {}".format(p)
         self.assertEqual(expect, str(index))
@@ -140,10 +139,10 @@ class Test(unittest.TestCase):
     def testTFIDF(self):
         tfidf_model = models.LsiModel.load(os.path.join(self.output,
                                                         "model.tfidf"))
-        create_index(self.corpus, self.output, self.output, "test", tfidf=True)
+        create_index(self.corpus, self.output, self.output, tfidf=True)
         index = similarities.Similarity.load(os.path.join(self.output,
-                                                          "test-tfidf.index"))
-        op = os.path.join(self.output, "testtfidf")
+                                                          "index.tfidf"))
+        op = os.path.join(self.output, "tfidf")
         p = "(stored under {})".format(str(op))
         expect = "Similarity index with 9 documents in 1 shards {}".format(p)
         self.assertEqual(expect, str(index))

@@ -18,7 +18,6 @@ logging.root.level = logging.INFO
 def create_index(corpus_path,
                  output_path,
                  model_path,
-                 name,
                  lda=False,
                  lsi=False,
                  tfidf=False,
@@ -45,32 +44,32 @@ def create_index(corpus_path,
     tfidf_model = models.TfidfModel.load(os.path.join(model_path,
                                                       "model.tfidf"))
     if tfidf:
-        op = os.path.join(output_path, name + "tfidf")
+        op = os.path.join(output_path, "tfidf")
         index = similarities.Similarity(op,
                                         tfidf_model[mc],
                                         num_features=len(dictionary))
-        index.save(os.path.join(output_path, name + "-tfidf.index"))
+        index.save(os.path.join(output_path, "index.tfidf"))
     if lda:
         model = models.LdaModel.load(os.path.join(model_path, "model.lda"))
-        op = os.path.join(output_path, name + "lda")
+        op = os.path.join(output_path, "lda")
         index = similarities.Similarity(op,
                                         model[mc],
                                         num_features=model.num_topics)
-        index.save(os.path.join(output_path, name + "-lda.index"))
+        index.save(os.path.join(output_path, "index.lda"))
     if lsi:
         model = models.LsiModel.load(os.path.join(model_path, "model.lsi"))
-        op = os.path.join(output_path, name + "lsi")
+        op = os.path.join(output_path, "lsi")
         index = similarities.Similarity(op,
                                         model[tfidf_model[mc]],
                                         num_features=model.num_topics)
-        index.save(os.path.join(output_path, name + "-lsi.index"))
+        index.save(os.path.join(output_path, "index.lsi"))
     if hdp:
         model = models.HdpModel.load(os.path.join(model_path, "model.hdp"))
-        op = os.path.join(output_path, name + "hdp")
+        op = os.path.join(output_path, "hdp")
         index = similarities.Similarity(op,
                                         model[mc],
                                         num_features=model.m_T)
-        index.save(os.path.join(output_path, name + "-hdp.index"))
+        index.save(os.path.join(output_path, "index.hdp"))
 
 
 class ModelException(Exception):

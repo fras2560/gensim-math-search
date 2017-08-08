@@ -12,6 +12,8 @@ from tangent.math_corpus import convert_math_expression, format_paragraph
 from gensim import corpora, models, similarities
 import os
 import argparse
+from gensim.models.tfidfmodel import TfidfModel
+from nltk.corpus.reader.ieer import documents
 
 PR_SCORE = 0
 R_SCORE = 2.0
@@ -21,10 +23,6 @@ def reverse_lookup(dictionary, value):
     for key, v in dictionary.items():
         if value == v:
             return key
-
-
-class LSIException(Exception):
-    pass
 
 
 class Queries():
@@ -50,35 +48,106 @@ class Queries():
 
 
 class Indexer():
-    def __init__(self, dictionary, model, index, corpus_path, tfidf=None):
-        if isinstance(model, models.LsiModel) and tfidf is None:
-            raise LSIException("LSI needs tfidf to be supplied")
+    def __init__(self, model, index, corpus_path):
+        """Indexer: uses various models to search for relevant documents
+
+        Parameters:
+            model: the path to the models (os.path)
+            index: the path to the index (os.path)
+            corpus_path: a path to the corpus document (os.path)
+        """
+        try:
+            t = "model.tfidf"
+            self.tfidf_model = models.TfidfModel.load(os.path.join(model, t))
+            t = "index.tfidf"
+            self.tfidf_index = similarities.Similarity.load(os.path.join(index,
+                                                                         t))
+        except:
+            self.tfidf_model = None
+            self.tfidf_index = None
+        try:
+            self.lsi_model = models.LsiModel.load(os.path.join(model,
+                                                               "model.lsi"))
+            t = "index.lsi"
+            self.lsi_index = similarities.Similarity.load(os.path.join(index,
+                                                                       t))
+        except:
+            self.lsi_model = None
+            self.lsi_index = None
+        try:
+            self.hdp_model = models.HdpModel.load(os.path.join(model,
+                                                               "model.hdp"))
+            t = "index.hdp"
+            self.hdp_index = similarities.Similarity.load(os.path.join(index,
+                                                                       t))
+        except:
+            self.hdp_model = None
+            self.hdp_index = None
+        try:
+            self.lda_model = models.LdaModel.load(os.path.join(model,
+                                                               "model.lda"))
+            t = "index.lda"
+            self.lda_index = similarities.Similarity.load(os.path.join(index,
+                                                                       t))
+        except:
+            self.lda_model = None
+            self.lda_index = None
+        self.dictionary = corpora.Dictionary.load(os.path.join(model,
+                                                               "corpus.dict"))
+        self.corpus = corpora.MmCorpus(os.path.join(model, "corpus.mm"))
         self.model = model
-        self.tfidf = tfidf
-        self.dictionary = dictionary
         self.index = index
         self.collection = DocumentCollection(corpus_path)
 
-    def search(self, query, top_k=10):
+    def search(self,
+               query,
+               hdp=False,
+               lsi=False,
+               lda=False,
+               tfidf=False,
+               top_k=10):
         """Returns the top k documents for the search
 
         Parameters:
             query: the query object to search (Query)
             top_k: how many results to return, default 10 (int)
+            hdp: search using a hdp model (boolean)
+            lsi: search using a lsi model (boolean)
+            lda: search using a lda model (boolean)
+            tfidf: search using a tfidf model (boolean)
         """
+        if (self.tfidf_model is None or self.tfidf_index is None) and tfidf:
+            raise SearchException("No tfidf model/index found")
+        if (self.lsi_model is None or self.lsi_index is None) and lsi:
+            raise SearchException("No lsi model/index found")
+        if (self.hdp_model is None or self.hdp_index is None) and hda:
+            raise SearchException("No hdp model/index found")
+        if (self.lda_model is None or self.lda_index is None) and lda:
+            raise SearchException("No lda model/index found")
         # set the number of documents returned
-        self.index.num_best = top_k
+        self.lsi_index.num_best = top_k
+        self.tfidf_index.num_best = top_k
         # get the vec of the query
-        vec_bow = self.dictionary.doc2bow(query.get_words().split(" "))
-        
-        print(type(self.model),
-              isinstance(self.model, models.LsiModel))
-        if isinstance(self.model, models.LsiModel):
-            print("here")
-            vec_model = self.model[self.tfidf[vec_bow]]
+        sims = []
+        if tfidf:
+            vec_bow = self.dictionary.doc2bow(query.get_words().split(" "))
+            vec_model = self.tfidf_model[vec_bow]
+            sims = self.tfidf_index[vec_model]
+        if lsi:
+            vec_bow = self.dictionary.doc2bow(query.get_words().split(" "))
+            vec_model = self.lsi_model[self.tfidf_model[vec_bow]]
+            lsi_sim = self.lsi_index[vec_model]
+        if tfidf and lsi:
+            # if both of them combine the results in an intelligent way
+            sims = self.combine_results(sims, lsi_sim)
+        elif not tfidf and lsi:
+            # just using lsi results
+            sims = lsi_sim
         else:
-            vec_model = self.model[vec_bow]
-        sims = self.index[vec_model]
+            # need to model as a base for lda and hdp
+            vec_bow = self.dictionary.doc2bow(query.get_words().split(" "))
+            vec_model = self.tfidf_model[vec_bow]
+            sims = self.tfidf_index[vec_model]
         if (len(sims) > 0):
             if isinstance(sims[0], list) or isinstance(sims[0], tuple):
                 sims = sorted(sims,
@@ -90,6 +159,49 @@ class Indexer():
         documents = []
         for doc in range(0, min(top_k, len(sims))):
             documents.append(self.collection.lookup(sims[doc][0]))
+        # now got a list of documents to compare
+        if hdp:
+            documents = self.sort_by_hdp(documents)
+        if lda:
+            documents = self.sort_by_lda(documents)
+        return documents
+
+    def combine_results(self, tfidf_results, lsi_results):
+        """Returns the combined results of the different results
+
+        Parameters:
+            tfidf_results: a list of results from tfidf search
+            lsi_results: a list of results from lsi search
+        Returns:
+            results: the combined lists
+        """
+        results = []
+        print("Results")
+        print(tfidf_results, lsi_results)
+        while len(tfidf_results) > 0 and len(lsi_results) > 0:
+            results.append(lsi_results.pop(0))
+            results.append(tfidf_results.pop(0))
+        while len(lsi_results) > 0:
+            results.append(tfidf_results.pop(0))
+        while len(lsi_results) > 0:
+            results.append(tfidf_results.pop(0))
+        return self.remove_duplicates(results)
+
+    def remove_duplicates(self, results):
+        """Remove duplicated results
+        """
+        seen = set()
+        seen_add = seen.add
+        return [x for x in results if not (x in seen or seen_add(x))]
+
+    def sort_by_hdp(self, documents):
+        """Returns the documents sorted by hdp model
+        """
+        return documents
+
+    def sort_by_lda(self, documents):
+        """Returns the documents sorted by lda model
+        """
         return documents
 
 
@@ -140,20 +252,39 @@ class ArxivQueries(Queries):
             output: the path to the file to output to (path)
             top_k: the number of documents to retrieve
         """
-        with open(output, "w+") as out_doc:
-            for query in self.queries:
-                r_docs = 0
-                pr_docs = 0
-                results = indexer.search(query, top_k=top_k)
-                print(results)
-                for result in results:
-                    score = self.results.find_score(query, result)
-                    if score > PR_SCORE:
-                        pr_docs += 1
-                    if score > R_SCORE:
-                        r_docs += 1
-                print("{},{},{}".format(query, r_docs, pr_docs),
-                      file=out_doc)
+        tests = [(True, True, True, True, "all"),
+                 (True, True, True, False, "hdp-lda-tfidf"),
+                 (True, True, False, True, "hdp-lda-lsi"),
+                 (False, False, True, False, "tfidf"),
+                 (False, False, False, True, "lsi"),
+                 (False, True, True, False, "lda-tfidf"),
+                 (False, True, False, True, "lda-lsi")
+                 ]
+        for test in tests:
+            filename, file_extension = os.path.splitext(output)
+            f = filename + "-" + test[-1] + file_extension
+            with open(f, "w+") as out_doc:
+                try:
+                    for query in self.queries:
+                        r_docs = 0
+                        pr_docs = 0
+                        results = indexer.search(query,
+                                                 hdp=test[0],
+                                                 lda=test[1],
+                                                 tfidf=test[2],
+                                                 lsi=test[3],
+                                                 top_k=top_k)
+                        print(results)
+                        for result in results:
+                            score = self.results.find_score(query, result)
+                            if score > PR_SCORE:
+                                pr_docs += 1
+                            if score > R_SCORE:
+                                r_docs += 1
+                        print("{},{},{}".format(query, r_docs, pr_docs),
+                              file=out_doc)
+                except SearchException:
+                    pass
 
 
 class ExpectedResults():
@@ -203,6 +334,10 @@ class ExpectedResults():
         if ".xml" in filename or ".html" in filename or "xhtml" in filename:
             filename = ".".join(filename.split(".")[0:-1])
         return filename
+
+
+class SearchException(Exception):
+    pass
 
 
 class Query():

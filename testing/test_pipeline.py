@@ -136,7 +136,6 @@ class TestIndexer(unittest.TestCase):
         create_index(self.corpus,
                      self.index,
                      self.models,
-                     "test",
                      lda=True,
                      lsi=True,
                      tfidf=True,
@@ -156,13 +155,13 @@ class TestIndexer(unittest.TestCase):
         path = os.path.join(self.models, "model.hdp")
         self.hdp = models.HdpModel.load(path)
         # load the indexes
-        path = os.path.join(self.index, "test-tfidf.index")
+        path = os.path.join(self.index, "index.tfidf")
         self.tfidf_index = similarities.Similarity.load(path)
-        path = os.path.join(self.index, "test-lsi.index")
+        path = os.path.join(self.index, "index.lsi")
         self.lsi_index = similarities.Similarity.load(path)
-        path = os.path.join(self.index, "test-lda.index")
+        path = os.path.join(self.index, "index.lda")
         self.lda_index = similarities.Similarity.load(path)
-        path = os.path.join(self.index, "test-hdp.index")
+        path = os.path.join(self.index, "index.hdp")
         self.hdp_index = similarities.Similarity.load(path)
 
     def log(self, message):
@@ -178,17 +177,13 @@ class TestIndexer(unittest.TestCase):
             os.remove(os.path.join(os.getcwd(), "testIndex.0"))
 
     def testSearchLSI(self):
-        indexer = Indexer(self.dictionary,
-                          self.lsi,
-                          self.lsi_index,
-                          self.corpus,
-                          tfidf=self.tfidf)
+        indexer = Indexer(self.models, self.index, self.corpus)
         doc = """
                 <num>test-query</num>
                 <keyword>Human computer interaction<keyword>
               """
         query = Query(BeautifulSoup(doc))
-        results = indexer.search(query)
+        results = indexer.search(query, lsi=True)
         expect = [os.path.join(self.corpus, '1.html'),
                   os.path.join(self.corpus, '3.html'),
                   os.path.join(self.corpus, '4.html'),
@@ -208,7 +203,7 @@ class TestIndexer(unittest.TestCase):
                 <keyword>Tree orderings<keyword>
               """
         query = Query(BeautifulSoup(doc))
-        results = indexer.search(query)
+        results = indexer.search(query, lsi=True)
         expect = [os.path.join(self.corpus, '6.html'),
                   os.path.join(self.corpus, '7.html'),
                   os.path.join(self.corpus, '8.html'),
@@ -224,9 +219,8 @@ class TestIndexer(unittest.TestCase):
         self.assertEqual(expect, results)
 
     def testSearchTFIDF(self):
-        indexer = Indexer(self.dictionary,
-                          self.tfidf,
-                          self.tfidf_index,
+        indexer = Indexer(self.models,
+                          self.index,
                           self.corpus)
         doc = "Human computer interaction"
         vec_bow = self.dictionary.doc2bow(format_paragraph(doc,
@@ -234,7 +228,7 @@ class TestIndexer(unittest.TestCase):
         self.log(self.tfidf)
         vec_tfidf = self.tfidf[vec_bow]
         index = similarities.Similarity.load(os.path.join(self.index,
-                                                          "test-tfidf.index"))
+                                                          "index.tfidf"))
         sims = index[vec_tfidf]
         sims = sorted(enumerate(sims), key=lambda item: -item[1])
         self.log(sims)
@@ -255,10 +249,11 @@ class TestIndexer(unittest.TestCase):
                 <keyword>Human computer interaction<keyword>
               """
         query = Query(BeautifulSoup(doc))
-        results = indexer.search(query)
+        results = indexer.search(query, tfidf=True)
         expect = [os.path.join(self.corpus, '1.html'),
                   os.path.join(self.corpus, '4.html'),
-                  os.path.join(self.corpus, '2.html')]
+                  os.path.join(self.corpus, '2.html')
+                  ]
         self.log(results)
         self.assertEqual(results, expect)
         doc = """
@@ -266,54 +261,48 @@ class TestIndexer(unittest.TestCase):
                 <keyword>tree ordering<keyword>
               """
         query = Query(BeautifulSoup(doc))
-        results = indexer.search(query)
+        results = indexer.search(query, tfidf=True)
         expect = [os.path.join(self.corpus, '6.html'),
                   os.path.join(self.corpus, '7.html'),
                   os.path.join(self.corpus, '8.html')]
+        self.log(results)
         self.assertEqual(results, expect)
 
 
 class TestArxiv(TestIndexer):
-    def testTFIDFIndexer(self):
+    def testIndexer(self):
         q = os.path.join(os.getcwd(), "test", "Tutorial", "testQueries.html")
         r = os.path.join(os.getcwd(), "test", "Tutorial", "results.txt")
         aq = ArxivQueries(q, r)
         m = os.path.join(self.index, "mock.txt")
-        indexer = Indexer(self.dictionary,
-                          self.tfidf,
-                          self.tfidf_index,
-                          self.corpus)
+        indexer = Indexer(self.models, self.index, self.corpus)
         aq.test_indexer(indexer, m, top_k=2)
-        expect = ["test-1,2,2", "test-2,2,2"]
-        with open(m) as f:
-            for index, line in enumerate(f):
-                self.assertEqual(expect[index], line.strip())
-        aq.test_indexer(indexer, m, top_k=5)
-        expect = ["test-1,3,3", "test-2,3,3"]
-        with open(m) as f:
-            for index, line in enumerate(f):
-                self.assertEqual(expect[index], line.strip())
+        checks = ["mock-all.txt",
+                  "mock-hdp-lda-tfidf.txt",
+                  "mock-tfidf.txt",
+                  "mock-lsi.txt",
+                  "mock-lda-tfidf.txt",
+                  "mock-lda-lsi.txt"]
+        expect = {"mock-all.txt": ["test-1,2,2",
+                                   "test-2,2,2"],
+                  "mock-hdp-lda-tfidf.txt": ["test-1,2,2",
+                                             "test-2,2,2"],
+                  "mock-tfidf.txt": ["test-1,2,2",
+                                     "test-2,2,2"],
+                  "mock-lsi.txt": ["test-1,2,2",
+                                   "test-2,2,2"],
+                  "mock-lda-tfidf.txt": ["test-1,2,2",
+                                         "test-2,2,2"],
+                  "mock-lda-lsi.txt": ["test-1,2,2",
+                                       "test-2,2,2"]}
+        for check in checks:
+            f = os.path.join(self.index, check)
+            with open(f) as result:
+                for index, line in enumerate(result):
+                    print(check, line.strip())
+                    self.assertEqual(expect[str(check)][index],
+                                     line.strip())
 
-    def testLSIIndexer(self):
-        q = os.path.join(os.getcwd(), "test", "Tutorial", "testQueries.html")
-        r = os.path.join(os.getcwd(), "test", "Tutorial", "results.txt")
-        aq = ArxivQueries(q, r)
-        m = os.path.join(self.index, "mock.txt")
-        indexer = Indexer(self.dictionary,
-                          self.lsi,
-                          self.lsi_index,
-                          self.corpus,
-                          tfidf=self.tfidf)
-        aq.test_indexer(indexer, m, top_k=2)
-        expect = ["test-1,2,2", "test-2,2,2"]
-        with open(m) as f:
-            for index, line in enumerate(f):
-                self.assertEqual(expect[index], line.strip())
-        aq.test_indexer(indexer, m, top_k=5)
-        expect = ["test-1,4,5", "test-2,4,4"]
-        with open(m) as f:
-            for index, line in enumerate(f):
-                self.assertEqual(expect[index], line.strip())
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']

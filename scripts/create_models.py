@@ -31,7 +31,6 @@ def create_model(corpus_path,
         tfidf=False: True if want a tfidf model created (boolean)
         lda=False: True if want a lda model created (boolean)
         lsi=False: True if want a lsi model created (boolean)
-        hdp=False: True if want a hdp model created (boolean)
     """
     mc = MathCorpus(corpus_path)
     mc.save_dictionary(os.path.join(output_path, "corpus.dict"))
