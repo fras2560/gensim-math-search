@@ -1,7 +1,9 @@
 '''
-Created on Aug 1, 2017
-
-@author: d6fraser
+Name: Dallas Fraser
+Email: d6fraser@uwaterloo.ca
+Date: 2017-08-14
+Project: Tangent GT
+Purpose: Stores some metrics that are used for various gensim models
 '''
 from scipy.stats import entropy
 from numpy.linalg import norm

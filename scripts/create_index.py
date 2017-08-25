@@ -110,17 +110,15 @@ if __name__ == "__main__":
     parser.add_argument("model",
                         help=prompt,
                         action="store")
+    prompt = "The directory path to where index(es) will be saved"
     parser.add_argument("output",
-                        help="The path to directory where model will be saved",
+                        help=prompt,
                         action="store")
-    parser.add_argument("name",
-                        help="The name of the index")
     args = parser.parse_args()
     # need to load the model
     create_index(args.corpus,
                  args.output,
                  args.model,
-                 args.name,
                  lda=args.lda,
                  lsi=args.lsi,
                  tfidf=args.tfidf,

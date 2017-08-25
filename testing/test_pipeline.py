@@ -268,6 +268,86 @@ class TestIndexer(unittest.TestCase):
         self.log(results)
         self.assertEqual(results, expect)
 
+    def testSearchLda(self):
+        indexer = Indexer(self.models, self.index, self.corpus)
+        doc = """
+                <num>test-query</num>
+                <keyword>Human computer interaction<keyword>
+              """
+        query = Query(BeautifulSoup(doc))
+        results = indexer.search(query, lda=True)
+        expect = [os.path.join(self.corpus, '2.html'),
+                  os.path.join(self.corpus, '4.html'),
+                  os.path.join(self.corpus, '1.html')
+                  ]
+        self.debug = True
+        self.log(expect)
+        self.log(results)
+        for check in expect:
+            self.assertEqual(True, check in results)
+        # now with lsi as a base
+        indexer = Indexer(self.models, self.index, self.corpus)
+        doc = """
+                <num>test-query</num>
+                <keyword>Human computer interaction<keyword>
+              """
+        query = Query(BeautifulSoup(doc))
+        results = indexer.search(query, lda=True, lsi=True)
+        expect = [os.path.join(self.corpus, '2.html'),
+                  os.path.join(self.corpus, '8.html'),
+                  os.path.join(self.corpus, '5.html'),
+                  os.path.join(self.corpus, '9.html'),
+                  os.path.join(self.corpus, '7.html'),
+                  os.path.join(self.corpus, '6.html'),
+                  os.path.join(self.corpus, '4.html'),
+                  os.path.join(self.corpus, '3.html'),
+                  os.path.join(self.corpus, '1.html')
+                  ]
+        self.log(expect)
+        self.log(results)
+        for check in expect:
+            self.assertEqual(True, check in results)
+
+    def testSearchHdp(self):
+        indexer = Indexer(self.models, self.index, self.corpus)
+        doc = """
+                <num>test-query</num>
+                <keyword>Human computer interaction<keyword>
+              """
+        query = Query(BeautifulSoup(doc))
+        results = indexer.search(query, hdp=True)
+        expect = [os.path.join(self.corpus, '2.html'),
+                  os.path.join(self.corpus, '4.html'),
+                  os.path.join(self.corpus, '1.html')
+                  ]
+        self.debug = True
+        self.log(expect)
+        self.log(results)
+        for check in expect:
+            self.assertEqual(True, check in results)
+        # now with lsi as a base
+        indexer = Indexer(self.models, self.index, self.corpus)
+        doc = """
+                <num>test-query</num>
+                <keyword>Human computer interaction<keyword>
+              """
+        query = Query(BeautifulSoup(doc))
+        results = indexer.search(query, hdp=True, lsi=True)
+        expect = [os.path.join(self.corpus, '2.html'),
+                  os.path.join(self.corpus, '8.html'),
+                  os.path.join(self.corpus, '5.html'),
+                  os.path.join(self.corpus, '9.html'),
+                  os.path.join(self.corpus, '7.html'),
+                  os.path.join(self.corpus, '6.html'),
+                  os.path.join(self.corpus, '4.html'),
+                  os.path.join(self.corpus, '3.html'),
+                  os.path.join(self.corpus, '1.html')
+                  ]
+        self.log(expect)
+        self.log(results)
+        for check in expect:
+            self.assertEqual(True, check in results)
+
 
 class TestArxiv(TestIndexer):
     def testIndexer(self):

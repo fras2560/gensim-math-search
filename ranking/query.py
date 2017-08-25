@@ -1,4 +1,3 @@
-
 '''
 Name: Dallas Fraser
 Email: d6fraser@uwaterloo.ca
@@ -8,12 +7,13 @@ Purpose: To allow a user to query and run the NTCIR-MathIR task
 '''
 from nltk.stem.porter import PorterStemmer
 from bs4 import BeautifulSoup
-from tangent.math_corpus import convert_math_expression, format_paragraph
+from tangent.math_corpus import convert_math_expression, format_paragraph,\
+    ParseDocument
 from gensim import corpora, models, similarities
 import os
 import argparse
-from gensim.models.tfidfmodel import TfidfModel
-from nltk.corpus.reader.ieer import documents
+from ranking.metrics import jensen_shannon_divergence
+
 
 PR_SCORE = 0
 R_SCORE = 2.0
@@ -161,9 +161,9 @@ class Indexer():
             documents.append(self.collection.lookup(sims[doc][0]))
         # now got a list of documents to compare
         if hdp:
-            documents = self.sort_by_hdp(documents)
+            documents = self.sort_by_hdp(documents, query)
         if lda:
-            documents = self.sort_by_lda(documents)
+            documents = self.sort_by_lda(documents, query)
         return documents
 
     def combine_results(self, tfidf_results, lsi_results):
@@ -194,14 +194,47 @@ class Indexer():
         seen_add = seen.add
         return [x for x in results if not (x in seen or seen_add(x))]
 
-    def sort_by_hdp(self, documents):
+    def sort_by_hdp(self, documents, query):
         """Returns the documents sorted by hdp model
         """
+        scores = [(document, self.score_document(document,
+                                                 query, self.hdp_model))
+                  for document in documents]
+        sorted_scores = sorted(scores,
+                               key=lambda item: -item[1])
+        documents = [document[0] for document in sorted_scores]
         return documents
 
-    def sort_by_lda(self, documents):
+    def score_document(self, document, query, model):
+        """Returns the score of the document based upon the query
+
+        Parameters:
+            document: the filepath to the document (os.path)
+            query: the query to score relative to (Query)
+            model: the model to use (hdp or lda)
+        Returns:
+            : a float representing the score (float)
+        """
+        words = ParseDocument(document).get_words()
+        document_bow = self.dictionary.doc2bow(words.split(" "))
+        query_bow = self.dictionary.doc2bow(query.get_words().split(" "))
+        document_vector = model[document_bow]
+        query_vector = model[query_bow]
+        return jensen_shannon_divergence(query_vector,
+                                         document_vector,
+                                         model)
+
+    def sort_by_lda(self, documents, query):
         """Returns the documents sorted by lda model
         """
+        print("Before", documents)
+        scores = [(document, self.score_document(document,
+                                                 query, self.lda_model))
+                  for document in documents]
+        sorted_scores = sorted(scores,
+                               key=lambda item: -item[1])
+        documents = [document[0] for document in sorted_scores]
+        print("After:", documents)
         return documents
 
 
@@ -252,13 +285,12 @@ class ArxivQueries(Queries):
             output: the path to the file to output to (path)
             top_k: the number of documents to retrieve
         """
-        tests = [(True, True, True, True, "all"),
-                 (True, True, True, False, "hdp-lda-tfidf"),
-                 (True, True, False, True, "hdp-lda-lsi"),
+        tests = [(True, False, True, False, "hdp-tfidf"),
+                 (True, False, False, True, "hdp-lsi"),
+                 (False, True, True, False, "lda-tfidf"),
+                 (False, True, False, True, "lda-lsi"),
                  (False, False, True, False, "tfidf"),
                  (False, False, False, True, "lsi"),
-                 (False, True, True, False, "lda-tfidf"),
-                 (False, True, False, True, "lda-lsi")
                  ]
         for test in tests:
             filename, file_extension = os.path.splitext(output)
@@ -278,6 +310,7 @@ class ArxivQueries(Queries):
                         for result in results:
                             score = self.results.find_score(query, result)
                             if score > PR_SCORE:
+                                print("Partial Relevant" + result)
                                 pr_docs += 1
                             if score > R_SCORE:
                                 r_docs += 1
@@ -369,103 +402,3 @@ class Query():
         """Returns the name of the query (str)
         """
         return self.name
-
-
-if __name__ == "__main__":
-    descp = """
-            Test the Gensim index(s) created by create_index.py
-            Author: Dallas Fraser (d6fraser@uwaterloo.ca)
-            """
-    parser = argparse.ArgumentParser(description=descp)
-    parser.add_argument('-lsi',
-                        dest="lsi",
-                        action="store_true",
-                        default=False,
-                        help="Build LSI Model")
-    parser.add_argument('-lda',
-                        dest="lda",
-                        action="store_true",
-                        help="Build LDA Model",
-                        default=False)
-    parser.add_argument('-tfidf',
-                        dest="tfidf",
-                        action="store_true",
-                        help="Build TFIDF Model",
-                        default=False)
-    parser.add_argument('-hdp',
-                        dest="hdp",
-                        action="store_true",
-                        help="Build HDP Model",
-                        default=False)
-    prompt = "The path to Index Folder (created by create_index)"
-    parser.add_argument("index",
-                        help=prompt,
-                        action="store")
-    parser.add_argument("name",
-                        help=" The name of indexes",
-                        action="store")
-    parser.add_argument('top_k', default=10, type=int,
-                        help='The number of results for each search',
-                        nargs='?')
-    prompt = "The path to Model directory (created by create_models)"
-    parser.add_argument("model",
-                        help=prompt,
-                        action="store")
-    parser.add_argument("corpus",
-                        help="The path to Math Corpus directory (html, xhtml)",
-                        action="store")
-    parser.add_argument("output",
-                        help="The path to output directory",
-                        action="store")
-    parser.add_argument("queries",
-                        help="The path to queries file",
-                        action="store")
-    parser.add_argument("results",
-                        help="The path to results file",
-                        action="store")
-    args = parser.parse_args()
-    aq = ArxivQueries(args.queries, args.results)
-    dictionary = corpora.Dictionary.load(os.path.join(args.model,
-                                                      "corpus.dict"))
-    corpus = args.corpus
-    if args.tfidf:
-        tfidf = models.TfidfModel.load(os.path.join(args.model,
-                                                    "model.tfidf"))
-        name = args.name + "-tfidf.index"
-        tfidf_index = similarities.Similarity.load(os.path.join(args.index,
-                                                                name))
-        indexer = Indexer(dictionary, tfidf, tfidf_index, corpus)
-        aq.test_indexer(indexer,
-                        os.path.join(args.output, "tfidf.txt"),
-                        top_k=args.top_k
-                        )
-    if args.lda:
-        lda = models.LdaModel.load(os.path.join(args.model,
-                                                "model.lda"))
-        name = args.name + "-lda.index"
-        lda_index = similarities.Similarity.load(os.path.join(args.index,
-                                                              name))
-        indexer = Indexer(dictionary, lda, lda_index, corpus)
-        aq.test_indexer(indexer,
-                        os.path.join(args.output, "lda.txt"),
-                        top_k=args.top_k)
-    if args.lsi:
-        lsi = models.LsiModel.load(os.path.join(args.model,
-                                                "model.lsi"))
-        name = args.name + "-lsi.index"
-        lsi_index = similarities.Similarity.load(os.path.join(args.index,
-                                                              name))
-        indexer = Indexer(dictionary, lsi, lsi_index, corpus)
-        aq.test_indexer(indexer,
-                        os.path.join(args.output, "lsi.txt"),
-                        top_k=args.top_k)
-    if args.hdp:
-        hdp = models.HdpModel.load(os.path.join(args.model,
-                                                "model.hdp"))
-        name = args.name + "-hdp.index"
-        hdp_index = similarities.Similarity.load(os.path.join(args.index,
-                                                              name))
-        indexer = Indexer(dictionary, hdp, hdp_index, corpus)
-        aq.test_indexer(indexer,
-                        os.path.join(args.output, "hdp.txt"),
-                        top_k=args.top_k)

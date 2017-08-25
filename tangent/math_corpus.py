@@ -8,11 +8,11 @@ Purpose: Used to parse math documents and gensim to iterate through them
 from gensim import corpora
 from six import iteritems
 from tangent.htmlStriper import strip_tags
-import os
 from nltk.stem.porter import PorterStemmer
 from nltk.corpus import stopwords
 from tangent.math_extractor import MathExtractor
 from tangent.mathdocument import MathDocument
+import os
 
 STOP_WORDS = set(stopwords.words('english'))
 
@@ -179,19 +179,25 @@ class ParseDocument(object):
         """
         self.filepath = filepath
         self.lines = []
+        self.formulas = []
+        self.text = []
         stemmer = PorterStemmer()
         (__, content) = MathDocument.read_doc_file(self.filepath)
         while len(content) != 0:
             (start, end) = MathExtractor.next_math_token(content)
             if start == -1:
                 # can just print the rest
-                self.lines.append(" ".join(format_paragraph(content, stemmer)))
+                words = format_paragraph(content, stemmer)
+                self.lines.append(" ".join(words))
+                self.text += words
                 content = ""
             else:
                 words = format_paragraph(content[0:start], stemmer)
                 self.lines.append(" ".join(words))
+                self.text += words
                 maths = convert_math_expression(content[start:end])
                 self.lines.append(maths)
+                self.formulas.append(maths)
                 # now move the content further along
                 content = content[end:]
 
@@ -199,6 +205,13 @@ class ParseDocument(object):
         """Returns a string of the words parsed"""
         return " ".join(self.lines)
 
+    def get_math(self):
+        """Returns a list of math formulas """
+        return self.formulas
+
+    def get_text(self):
+        """Returns a list of text"""
+        return self.text
 
 if __name__ == "__main__":
     pass

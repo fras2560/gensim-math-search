@@ -1,0 +1,7 @@
+gensim==2.2.0
+requests==2.18.1
+scipy==0.19.1
+numpy==1.13.1
+nltk==3.2.4
+six==1.10.0
+beautifulsoup4==4.6.0
