@@ -387,7 +387,15 @@ class Query():
                                                       stemmer)))
         formulas = []
         for formula in topic.find_all("formula"):
-            formulas.append(convert_math_expression(str(formula)))
+            tokens = convert_math_expression(str(formula),
+                                                    eol=True,
+                                                    no_payload=True)
+            tokens = (tokens
+                      .replace("#(start)#", "")
+                      .replace("#(end)#", "")
+                      .strip())
+            formulas.append(tokens)
+            
         self.result = keywords + formulas
         self.name = topic.num.text
         self.result = [result for result in self.result

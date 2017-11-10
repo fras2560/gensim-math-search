@@ -35,7 +35,7 @@ class TestQuery(unittest.TestCase):
     def testConstructor(self):
         q = Query(self.topic)
         self.assertEqual("NTCIR12-MathWiki-1", str(q))
-        expect = "symbol ('v!ζ','!0','n')"
+        expect = "symbol #('v!ζ','!0','n')#"
         self.assertEqual(expect, q.get_words())
 
 

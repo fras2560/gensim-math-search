@@ -24,8 +24,8 @@ class TestMathCorpus(unittest.TestCase):
 
     def test(self):
         mc = MathCorpus(self.fp)
-        expected = [[(0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1)],
-                    [(0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1)]]
+        expected = [[(0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1)],
+                    [(0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1)]]
         print(mc.dictionary.token2id)
         for index, vector in enumerate(mc):
             print(vector)
@@ -59,9 +59,8 @@ class TestMathDocument(unittest.TestCase):
                   "algebra",
                   "in",
                   "case",
-                  "('n!1','+','n')",
-                  "('n!1','n!1')",
-                  "('+','n!1','n')"]
+                  "#('n!1','+','n')#",
+                  "#('+','n!1','n')#"]
         self.assertEqual(md.get_words().strip(), " ".join(expect))
 
     def test2(self):
@@ -73,13 +72,13 @@ class TestMathDocument(unittest.TestCase):
                   "full",
                   "conform",
                   "theori",
-                  "('n!1','+','n')",
-                  "('n!1','n!1')",
-                  "('+','n!1','n')",
+                  "#('n!1','+','n')#",
+                  "#('+','n!1','n')#",
                   "minkowski",
                   "algebra",
                   "quantum",
                   "field"]
+        print(md.get_words().strip())
         self.assertEqual(md.get_words().strip(), " ".join(expect))
 
 
@@ -113,8 +112,8 @@ class TestFunctions(unittest.TestCase):
                     </annotation>
                   </semantics></math>
                """
-        result = convert_math_expression(test)
-        self.assertEqual(result, "('v!i','!0','n')")
+        result = convert_math_expression(test, eol=True, no_payload=True)
+        self.assertEqual(result, "#(start)# #('v!i','!0','n')# #(end)#")
 
     def testKeepWord(self):
         self.assertEqual(keep_word("they"), False)

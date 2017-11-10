@@ -24,13 +24,10 @@ class TestStriper(unittest.TestCase):
 
     def testMathDoc(self):
         test = """
-                <div class="bibblock">
-                   Willick, J.A., Courteau, S., Faber, S.M., Burstein, D.,
-            Dekel, A., &amp; Strauss, M.A. 1997, ApJS, 109, 333
-                            </div>"""
+                <div class="bibblock">Willick, J.A., Courteau, S., Faber, S.M., Burstein, D., Dekel, A., &amp; Strauss, M.A. 1997, ApJS, 109, 333</div>
+                """
         result = strip_tags(test)
-        expect = """Willick, J.A., Courteau, S., Faber, S.M., Burstein, D.,
-      Dekel, A., & Strauss, M.A. 1997, ApJS, 109, 333"""
+        expect = """Willick, J.A., Courteau, S., Faber, S.M., Burstein, D., Dekel, A., & Strauss, M.A. 1997, ApJS, 109, 333"""
         self.assertEqual(result.strip(), expect)
 
 
